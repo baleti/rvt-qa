@@ -71,6 +71,11 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
         for i, j, d, dl in pairs:
             if abs(dl) > 0.15*max(1.0, math.hypot(lr[j][2]-lr[j][0], lr[j][3]-lr[j][1])):
                 F.append(dict(kind='longline-extent', score=0.9, length_diff_px=round(float(dl)), box_px=(min(lr[j][0], lr[j][2]), min(lr[j][1], lr[j][3]), max(lr[j][0], lr[j][2]), max(lr[j][1], lr[j][3]))))
+        br, bo = D.line_end_bubbles(ref, lr), D.line_end_bubbles(w, lo)
+        bp, bmiss, bextra = D.match_pts(bo, br, tol=18)
+        res['bubbles'] = dict(revit=len(br), ours=len(bo), matched=len(bp), missing=len(bmiss), extra=len(bextra))
+        for x, y, r in bmiss: F.append(dict(kind='bubble-missing', score=1.1, box_px=(x-30, y-30, x+30, y+30)))
+        for x, y, r in bextra: F.append(dict(kind='bubble-extra', score=0.9, box_px=(x-30, y-30, x+30, y+30)))
         # crops for text findings through the same mapping (our mm -> px -> warp)
         sw, sh = svg_size_mm(svg)
         for f in F:

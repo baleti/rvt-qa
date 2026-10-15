@@ -14,15 +14,14 @@ def main():
         o = os.path.join(out, os.path.basename(rvt)); os.makedirs(o, exist_ok=True)
         vs = gt.views(g); ids = [i for i, v in vs.items() if 'png' in ' '.join(v['files']) and (sheets or v['cls'] != 'ViewSheet')][:mx]
         qav.render(rvt, ids, os.path.join(o, 'ours'))
-        rows = []
-        for vid in ids:
+        rj = os.path.join(o, 'results.jsonl'); rows = [json.loads(l) for l in open(rj)] if os.path.exists(rj) else []
+        done = {r['id'] for r in rows}
+        for vid in [i for i in ids if i not in done]:
             t = time.time()
             try: r = qav.run_one(rvt, vid, g, o)
             except Exception as ex: r = dict(id=vid, name=vs[vid]['name'], error=repr(ex)[:200])
-            r['cls'] = vs[vid]['cls']; r['secs'] = round(time.time() - t, 1); rows.append(r)
+            r['cls'] = vs[vid]['cls']; r['secs'] = round(time.time() - t, 1); rows.append(r); open(rj, 'a').write(json.dumps(r, default=str) + '\n')
             print(json.dumps({k: r.get(k) for k in ('id', 'name', 'cls', 'pass', 'summary', 'error')}, default=str), flush=True)
-        with open(os.path.join(o, 'results.jsonl'), 'w') as f:
-            for r in rows: f.write(json.dumps(r, default=str) + '\n')
         write_html(rows, os.path.join(o, 'dashboard.html'), os.path.basename(rvt))
 def write_html(rows, fn, title):
     h = ['<!doctype html><meta charset=utf-8><title>QA %s</title><style>body{font:14px sans-serif;margin:16px}td,th{border:1px solid #ccc;padding:3px 8px}.p{background:#cfc}.f{background:#fcc}.e{background:#ddd}</style><h2>%s</h2><table><tr><th>id<th>class<th>name<th>pass<th>SSIM<th>ink P3<th>ink R3<th>text recall<th>top findings</tr>' % (html.escape(title), html.escape(title))]

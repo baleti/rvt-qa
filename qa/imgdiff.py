@@ -113,7 +113,7 @@ def match_lines(ours, ref, tol=8):
 def circles(g):
     """grid bubbles / section heads: HoughCircles"""
     b = cv2.GaussianBlur(g, (5, 5), 1.2)
-    c = cv2.HoughCircles(b, cv2.HOUGH_GRADIENT, dp=1.2, minDist=14, param1=120, param2=22, minRadius=7, maxRadius=24)
+    c = cv2.HoughCircles(b, cv2.HOUGH_GRADIENT, dp=1.2, minDist=14, param1=120, param2=14, minRadius=7, maxRadius=24)
     return [] if c is None else [tuple(float(v) for v in x) for x in c[0]]
 
 def match_pts(ours, ref, tol=12):
@@ -153,3 +153,26 @@ def register_search(ours, ref, scales=None, down=4, blur=3):
     sc, s, dx, dy = best
     M = np.float32([[s, 0, (1-s)*W/2 + dx], [0, s, (1-s)*H/2 + dy]])
     return cv2.warpAffine(og, M, (W, H), flags=cv2.INTER_AREA, borderValue=255), (s, dx, dy, sc, M)
+
+def bubbles(g, rmin=8, rmax=22, ring_min=0.7):
+    """grid-bubble detector: Hough circle candidates verified by ink coverage of the circumference (rejects clutter)."""
+    m = ink(g, 190)
+    cand = circles(g)
+    out = []
+    for x, y, r in cand:
+        if not (rmin <= r <= rmax): continue
+        th = np.linspace(0, 2*np.pi, 48, endpoint=False); hit = 0
+        for t in th:
+            for dr in (-2, -1, 0, 1, 2):
+                xx, yy = int(round(x + (r+dr)*np.cos(t))), int(round(y + (r+dr)*np.sin(t)))
+                if 0 <= yy < m.shape[0] and 0 <= xx < m.shape[1] and m[yy, xx]: hit += 1; break
+        if hit/len(th) >= ring_min and all(np.hypot(x-a, y-b) > r for a, b, _ in out): out.append((x, y, r))
+    return out
+
+def line_end_bubbles(g, segs, rmin=8, rmax=22):
+    """bubbles that sit at the end of a long line (grid heads): circle centre within r+10 px of a segment endpoint"""
+    out = []
+    for x, y, r in bubbles(g, rmin, rmax, 0.6):
+        for s in segs:
+            if min(np.hypot(x-s[0], y-s[1]), np.hypot(x-s[2], y-s[3])) <= r + 12: out.append((x, y, r)); break
+    return out
