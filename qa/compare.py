@@ -55,9 +55,9 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
             if g:
                 res['geom'] = {k: v for k, v in g.items() if k not in ('layers', 'extra_elements')}; res['geom_layers'] = g['layers']; res['geom_extra_elements'] = g['extra_elements']
                 for r in g['layers'][:8]:
-                    if r['recall'] < 0.7 and r['len_mm'] > 40: F.append(dict(kind='geom-layer-missing', score=0.9 + (1 - r['recall']), what=r['layer'], recall=r['recall'], len_mm=r['len_mm']))
+                    if r['recall'] < 0.7 and r['len_mm'] > 40: F.append(dict(kind='geom-layer-missing', score=0.9 + (1 - r['recall']), what=r['layer'], recall=r['recall'], len_mm=r['len_mm'], **({'at_mm': r['at_mm']} if r.get('at_mm') else {})))
                 for r in g['extra_elements'][:6]:
-                    if r['extra_mm'] > 30: F.append(dict(kind='geom-extra-element', score=0.7 + min(r['extra_mm'], 400) / 400, what='element %s' % r['element'], extra_mm=r['extra_mm'], of_mm=r['of_mm']))
+                    if r['extra_mm'] > 30: F.append(dict(kind='geom-extra-element', score=0.7 + min(r['extra_mm'], 400) / 400, what='element %s' % r['element'], extra_mm=r['extra_mm'], of_mm=r['of_mm'], **({'at_mm': r['at_mm']} if r.get('at_mm') else {})))
         except Exception as ex: res['geom_note'] = repr(ex)[:150]
     # ---- tier 1b: sheet PDF (paper units): text content/size/position + line-weight inventory
     if pdf and is_sheet and os.path.exists(pdf) and svg.endswith('.svg'):

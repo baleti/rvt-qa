@@ -4,3 +4,5 @@
 - remote-host job qa-dash20 queued via h1dash.sh (remote-host was busy).
 - VLM probe done: SmolVLM-256M useless (64 s, generic). Dashboard on remote-host pending (retry loop h1dash.sh, log /tmp/claude-1000/h1dash.log).
 - 2026-10-15: dashboards on remote-host (capped): Residential 25 views (1 pass, 19 reliable, median SSIM 0.78, ink P/R@3px 0.65/0.56), Commercial 47 (0 pass, 23 reliable, SSIM 0.75, P/R 0.74/0.38), rst basic 76 rows (6 pass, 4 errors, 56 reliable, SSIM 0.80, P/R 0.69/0.55). Low recall = our views drop annotations/tags. 3D views are shaded in Revit's PNG: registration unreliable (reg_score < 0.35 flagged, rely on text findings). Fix: tall exports (3000x11103) downscaled (was OOM at 3 GB). dashboards at out/<file>/dashboard.html.
+
+- geom findings now carry at_mm and get a Revit | ours | overlay crop. Residential view 32: top extra elements 234610/234684/234150/234712/234330 sit on dimension strings (tick marks and witness lines drawn where Revit has none or offset); A-AREA-IDEN / A-DETL-MBND layers missing. OCR bench: tesseract is absent on remote-host, bench now skips it (remote-host numbers stand).

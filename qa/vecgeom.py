@@ -65,8 +65,13 @@ def compare(svg_text, dxf, scale, tol_mm=0.6):
                revit_mm=round(len(B) * 0.25), ours_mm=round(len(A) * 0.25))
     per = collections.defaultdict(lambda: [0, 0])
     for l, d in zip(lb, db): per[l][0] += 1; per[l][1] += d <= tol_mm
-    res['layers'] = [dict(layer=str(l), len_mm=round(n * 0.25), recall=round(float(m) / n, 3)) for l, (n, m) in sorted(per.items(), key=lambda kv: -(kv[1][0] - kv[1][1]))[:20]]
+    lbn = np.array([str(x) for x in lb]); lan = np.array([str(x) for x in la])
+    def worst(P, lab, dist, name):     # unmatched sample nearest to the median of the unmatched ones (our paper mm)
+        Q = P[(lab == name) & (dist > tol_mm)]
+        if not len(Q): return None
+        q = Q[np.argmin(np.hypot(*(Q - np.median(Q, 0)).T))]; return [round(float(q[0]), 1), round(float(q[1]), 1)]
+    res['layers'] = [dict(layer=str(l), len_mm=round(n * 0.25), recall=round(float(m) / n, 3), at_mm=worst(Bs, lbn, db, str(l))) for l, (n, m) in sorted(per.items(), key=lambda kv: -(kv[1][0] - kv[1][1]))[:20]]
     unm = collections.Counter(); tot = collections.Counter()
     for l, d in zip(la, da): tot[l] += 1; unm[l] += d > tol_mm
-    res['extra_elements'] = [dict(element=str(l), extra_mm=round(float(n) * 0.25), of_mm=round(float(tot[l]) * 0.25)) for l, n in unm.most_common(15) if n > 8]
+    res['extra_elements'] = [dict(element=str(l), extra_mm=round(float(n) * 0.25), of_mm=round(float(tot[l]) * 0.25), at_mm=worst(A, lan, da, str(l))) for l, n in unm.most_common(15) if n > 8]
     return res
