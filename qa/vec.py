@@ -57,17 +57,30 @@ def vote_registration(ours, ref, tol=2.0, cands=None):
                 a = np.array(pts[key]); best = (sc, float(np.median(a[:, 0])), float(np.median(a[:, 1])), n)
     return best
 
+def left_edge(o):
+    """SVG text x is at its anchor; DXF insert is the left edge: convert using an estimated advance width (0.5 em per char)"""
+    w = 0.5 * o.get('h', 0) * len(o['t'])
+    a = o.get('anchor', 'start')
+    return o['x'] - (w if a == 'end' else w / 2 if a == 'middle' else 0)
+
 def compare_texts(ours, ref, sc, tx, ty, ptol=2.0):
-    """ref positions mapped into our frame; greedy match by identical normalised text and nearest position"""
+    """ref positions mapped into our frame; greedy match by identical normalised text (or ref text contained in ours: DXF splits multi-word comments into several MTEXT) and nearest position, comparing at the left edge"""
     used = set(); matched = []; missing = []
     for r in ref:
-        rx, ry = sc*r['x'] + tx, sc*r['y'] + ty
+        rx, ry = sc*r['x'] + tx, sc*r['y'] + ty; nr = norm(r['t'])
         best = None
         for i, o in enumerate(ours):
-            if i in used or norm(o['t']) != norm(r['t']): continue
-            d = math.hypot(o['x'] - rx, o['y'] - ry)
+            no = norm(o['t'])
+            if no != nr and not (len(nr) >= 2 and nr in no): continue
+            if i in used and no == nr: continue
+            d = math.hypot(left_edge(o) - rx, o['y'] - ry)
+            if no != nr: d += 0.5          # prefer exact matches
             if best is None or d < best[0]: best = (d, i)
-        if best and best[0] <= 40: used.add(best[1]); matched.append((r, ours[best[1]], best[0]))
+        if best and best[0] <= 40:
+            if norm(ours[best[1]]['t']) == nr: used.add(best[1])
+            matched.append((r, ours[best[1]], best[0]))
         else: missing.append(dict(r, mx=rx, my=ry))
+    # a container text counts as used once it explained a part
+    used |= {i for i, o in enumerate(ours) if any(m[1] is o for m in matched)}
     extra = [o for i, o in enumerate(ours) if i not in used]
     return matched, missing, extra

@@ -6,7 +6,7 @@ for d in ~/rvt-research/gt_views/*/; do
   full=$(head -1 $d/index.tsv | cut -f2); base=${full##*\\}
   src=$(ls ~/rvt-research/corpus/*/$base ~/rvt-research/rosetta/$base 2>/dev/null | head -1)
   # drop the ve_<year>_<name>_<ext>_ prefix of scene exports
-  [ -z "$src" ] && src=$(ls ~/rvt-research/rosetta/${base#*_rte_} ~/rvt-research/corpus/*/${base#*_rvt_} 2>/dev/null | head -1)
+  [ -z "$src" ] && src=$(ls ~/rvt-research/rosetta/${base#*_rte_} ~/rvt-research/write-lab/generated/vp/${base#*_rte_} ~/rvt-research/corpus/*/${base#*_rvt_} 2>/dev/null | head -1)
   [ -z "$src" ] && continue
   [ -s out/$(basename $src)/results.jsonl ] && continue
   echo "RUN $src"; systemd-run --user --scope -q -p MemoryMax=3G -p MemorySwapMax=0 -p CPUQuota=100% nice -n 19 .venv/bin/python qa-dash $src --sheets

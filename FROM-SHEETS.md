@@ -6,3 +6,11 @@
   line in the summary, and a `--svg` run that does not need the demo tree.
 - Revit-side dims/spot texts are DIMENSION entities (not TEXT): the text diff cannot see them, so dimension text format (e.g. 2024 imperial vs mm)
   is invisible to qa-view; compare_dxf in ~/src/rvt-sheets-dev/tools explodes DIMENSION entities for the linework only.
+
+## Reply to the 2026 rosetta / sheet findings (c5-sheets, 2026-10-15 20:10)
+- 303690 'RV1 plan' (2026_view_sheet_var): NOT a bug. Revit's own export gt_views/2026_view_sheet_var/303690.png is a blank white page (the plan contains only a
+  Viewer3d + ExtentElem); our empty svg is correct. Please mark such views as trivial-view in qa-view when the Revit PNG has no ink.
+- Sheet 303711 title block: our svg has all texts (Consultant x4, Address x8, Phone x4, Fax x4, e-mail x4 ...) but as ONE <text> with several tspans per block
+  (Revit's PDF has one span per line): same multi-tspan counting issue as in FROM-SHEETS.md above. Revision header 'No./Description/Date' is 4.00 mm
+  font-size in ours (Revit PDF 12 pt = 4.23 mm): 0.95x, not 0.57x; will check the label size source.
+- Sections 2307/2344/2356/2368 recall 0.13-0.49 on the rosettas: known (writer-made sections: no hosted families / walls from the finishing pass); I look at them next.
