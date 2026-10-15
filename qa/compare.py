@@ -26,6 +26,8 @@ def crop_pair(ref, warped, box, path, pad=40):
 
 def compare_view(svg, meta, png, dxf, outdir, vid):
     os.makedirs(outdir, exist_ok=True); res = dict(id=vid, name=meta.get('name'), findings=[]); F = res['findings']
+    if svg.endswith('.svg') and 'viewBox' not in open(svg).read(4000):
+        F.append(dict(kind='view-not-rendered', score=10.0, what='our render is an empty SVG (view type unsupported?)')); res['summary'] = {}; res['pass'] = False; return res
     # ---- tier 1: vector text diff (Revit DXF vs our SVG), numeric
     tx_map = None
     if dxf and os.path.exists(dxf) and meta.get('scale'):
