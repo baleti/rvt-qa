@@ -1,0 +1,47 @@
+# rvt-qa: automated visual-diff QA for rvt-sheets views
+
+Goal: find simple view/sheet defects BEFORE spending Claude tokens. Local only, no external services.
+
+## Tools
+- `qa-view FILE.rvt VIEWID [--gt DIR] [--svg OURS.svg]` : renders our view (rvt-sheets venv, capped 3 GB), compares with Revit's PNG + DXF export (default dir ~/rvt-research/gt_views/<match on FILE line of index.tsv>), prints PASS/FAIL, summary, ranked findings; crops (Revit | ours | overlay red=Revit only, cyan=ours only) in out/<file>/diff/.
+- `qa-dash FILE.rvt... [--sheets] [--max N]` : all exported views of a file -> out/<file>/results.jsonl + dashboard.html. Heavy: run on host1 (`./h1dash.sh`).
+
+## Method (cheap numeric first)
+1. Vector text diff (qa/vec.py): Revit DXF TEXT/MTEXT vs our SVG `<text>`; registration by voting on identical strings (translation only; units feet*304.8/scale, y flip). Reports missing / extra / moved / wrong-size text with layer. Calibrated: our font-size = 1.389 x DXF text height.
+2. Image diff (qa/imgdiff.py): multi-scale + translation registration by correlation of blurred ink maps (our crop/margins differ from Revit's FitToPage, scale range 0.5..1.8), ink precision/recall at 3/6 px, SSIM, 6x9 cell heatmap of missing/extra ink, long-line (Hough) and circle detection helpers.
+3. OCR (qa/ocr.py, tesseract): WORKS POORLY on Revit PNGs (text is 5-8 px high; 4 of 28 words matched on the L2 reference). Use the DXF text instead; OCR only for PNG-only references.
+
+## Pass rule (provisional)
+ink P/R at 6 px >= 0.85 and text recall >= 0.9.
+
+## Status
+See PROGRESS.md.
+
+## Model survey (CPU, local)
+- SmolVLM-256M-Instruct (transformers, torch CPU, 4 threads): 64 s per two-image crop, answer is generic ("plan view of a building"), cannot list missing labels. NOT useful for diffs at this size. Larger VLMs (Qwen2-VL-2B) would need host1 and are expected to be too slow/inexact for per-crop diffs; numeric tiers (DXF text, ink maps, Hough lines) are faster and exact, so VLMs are left for final human/Claude crop review only.
+- tesseract OCR on Revit PNGs (~1200 px wide): 4/28 words matched; unusable at that resolution. DXF text is the ground truth for text.
+
+## Sheet PDF tier (qa/pdfvec.py)
+For ViewSheet exports with a Revit PDF (2022+ scenes, page = paper, 1 pt = 0.3528 mm): text spans (content, size in pt, font, position compared at the SVG's own text-anchor) and line weight inventory (stroke length per width class, both sides). Findings: text-missing/extra/moved/size, lineweight-missing. 2026_view_sheet_var sheet 303711: Revit 46 text spans vs ours 26 (21 matched; title-block consultant/address blocks missing; 3 labels 0.57x size), line weights 0.10 mm and 0.25 mm present on both sides (0.25 mm length identical 5078 mm, 0.10 mm 6359 vs 7209 mm).
+
+## Survey results (measured, host3, 4 threads, nice 19)
+Tile benchmark (qa/bench_tiles.py, Residential view 32, 6x9 tiles of the aligned pair; score = Spearman rank correlation with the ink-diff (missing+extra px) tile score; cost for all 54 tiles):
+| method | secs | Spearman | verdict |
+|---|---|---|---|
+| SSIM per tile | 0.4 | 0.33 | weak (white areas dominate) |
+| MS-SSIM (3 scales) | 0.6 | 0.57 | ok |
+| Canny edge chamfer | 0.2 | 0.66 | good and nearly free |
+| LPIPS (AlexNet, 128 px tiles) | 3.4 | 0.79 | best tile ranker, cheap on CPU |
+| DINOv2-small CLS per tile | 45 | 0.52 | slow, no better than chamfer |
+Take-away: rank tiles with LPIPS + edge chamfer; DINOv2 patch embeddings not worth it at this size.
+Text compare fix (2026-10-15, from c2-annot): SVG text-anchor (end/middle) is converted to a left edge and DXF texts split into several MTEXT (e.g. 'vision' 'lite') match inside our longer string: Residential view 32 matched 52 -> 110 of 126, median position error 4.2 -> 1.3 mm.
+
+OCR benchmark (ground truth = the SVG's own text, our render of Residential view 32 at 3000 / 6000 px wide, 204 words >= 5 px tall):
+| engine | width | secs | GT recall | precision |
+|---|---|---|---|---|
+| tesseract --psm 11 | 3000 | 3.9 | 0.28 | 0.36 |
+| tesseract --psm 11 | 6000 | 6.6 | 0.39 | 0.55 |
+EasyOCR and docTR exceeded the 3 GB host3 cap (OOM-killed, 3 attempts): MEMORY RULE from the orchestrator: no ML/OCR benchmarks on host3; they run on host1 via `h1run run qaocr -- ./bench_h1.sh` (results in out/bench/ocr.txt). PaddleOCR: no paddlepaddle wheel for Python 3.14 (pip: no matching distribution), skipped. Conclusion so far: OCR stays a fallback, vector text (DXF/PDF) is the reference.
+
+## Vector geometry tier (qa/vecgeom.py, host3-light: 0.6 GB RSS, ~20 s per view)
+Revit DXF primitives (per layer) vs our SVG paths (per element id) in paper mm, both sampled every 0.25 mm; scale known (304.8/view scale), translation by FFT + median ICP. Reports recall per Revit layer, extra-ink ranking per OUR element id (precision offenders, ids can be looked up in the reader), chamfer and Hausdorff-95 in mm, overall P/R at 0.6 mm. Residential view 32: recall 0.94, precision 0.73, chamfer 1.87 mm, Hausdorff95 26 mm; weakest layers A-AREA-IDEN 0.21, S-STRS-ANNO 0.26, A-DETL-MBND 0.58; elements 234610 / 234684 / 234150 / 206435 draw 450-640 mm of ink Revit does not have. Each qa-view run also writes out/<file>/defects_<view>.md (ranked table, area, crops).
