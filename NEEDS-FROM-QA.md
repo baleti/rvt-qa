@@ -29,3 +29,25 @@ Output: PASS/FAIL, ranked findings (text-missing/extra/moved/size, longline-miss
 | 19 Commercial | 47 | 0 | 0.75 | 0.74 | 0.38 |
 | 18 rst basic | 76 | 6 | 0.80 | 0.69 | 0.55 |
 Recall is the weak side (we omit Revit content). Open out/<file>/dashboard.html (sorted worst first). 3D views are skipped as unreliable (shaded export).
+
+## Wiring into c5-sheets' workflow
+1. After a drawing change in the DEV tree: `cd ~/src/rvt-qa && .venv/bin/python qa-regress --dev` (about 1 min, 5 golden views of Residential 20; exit 1 and a REGRESSION line when SSIM -0.02 / ink P or R@3px -0.03 / text recall -0.05 vs out/baseline.json). When an improvement is intended and verified: `qa-regress --dev --save`.
+2. For a specific view: `RVTSHEETS_DIR=~/src/rvt-sheets-dev .venv/bin/python qa-view FILE VIEWID` (crops in out/<file>/diff/, text/layer/grid findings ranked).
+3. Corpus-wide: `qa-dash FILE.rvt` on remote-host then `qa-layers` (aggregate).
+
+## Where our ink is missing, by Revit DXF layer (corpus: 2020 Residential/Commercial/rst basic; recall = share of Revit's layer ink within 4 px of ours; sorted by lost ink)
+| layer | views | recall | note |
+|---|---|---|---|
+| S-RBAR (rebar) | 14 | 0.61 | biggest loss, bar-by-bar rebar is open in HANDOFF |
+| S-GRID | 27 | 0.47 | grid line extents/segments |
+| S-GRID-IDEN | 27 | 0.08 | grid bubbles/labels almost never match |
+| L-PLNT | 6 | 0.53 | planting |
+| A-FLOR-LEVL | 23 | 0.64 | level lines |
+| A-WALL | 42 | 0.82 | |
+| S-FNDN | 22 | 0.55 | |
+| C-TOPO | 17 | 0.62 | |
+| A-ANNO-NOTE | 13 | 0.26 | notes/leaders |
+| A-DETL-GENF | 10 | 0.42 | detail fills |
+| G-ANNO-SYMB | 24 | 0.39 | annotation symbols |
+| C-PROP-LINE | 5 | 0.11 | property lines |
+Full table: `qa-layers`. Highest value first: grid + grid heads (S-GRID, S-GRID-IDEN), then annotation symbols/notes, levels, rebar.

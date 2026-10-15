@@ -1,6 +1,6 @@
 """run with the rvt-sheets venv python: render_ours.py FILE.rvt OUTDIR VIEWID... -> OUTDIR/<id>.svg + <id>.json (kind, scale, name). Mirrors tools/fid_images.py."""
 import sys, os, json, time
-sys.path.insert(0, os.path.expanduser('~/src/rvt-sheets'))
+sys.path.insert(0, os.path.expanduser(os.environ.get('RVTSHEETS_DIR', '~/src/rvt-sheets')))   # set RVTSHEETS_DIR=~/src/rvt-sheets-dev to QA the dev tree
 from rvtsheets.decode import Decoder
 from rvtsheets.viewdraw import ViewDrawer
 from rvtsheets.viewsvg import view_svg

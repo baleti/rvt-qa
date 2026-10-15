@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""qa-regress [--save] [--dev] : QA a fixed golden set (plans/sections/elevation with DXF) and compare with out/baseline.json.
+--dev renders from ~/src/rvt-sheets-dev (RVTSHEETS_DIR). --save stores the current numbers as the new baseline. Exit 1 on a regression (SSIM -0.02, ink P/R@3 -0.03, text recall -0.05)."""
+import sys, os, json, importlib.machinery, importlib.util, shutil
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
+from qa import gt
+ld = importlib.machinery.SourceFileLoader('qav', os.path.join(HERE, 'qa-view')); spec = importlib.util.spec_from_loader('qav', ld); qav = importlib.util.module_from_spec(spec); ld.exec_module(qav)
+GOLD = {'20_Residential_Sample_Project.rvt': [32, 36, 29154, 29181, 156499], '19_Commercial_Sample_Project.rvt': [], '18_rst_basic_sample_project.rvt': []}
+if '--dev' in sys.argv: os.environ['RVTSHEETS_DIR'] = '~/src/rvt-sheets-dev'
+out = os.path.join(HERE, 'out', 'regress_dev' if '--dev' in sys.argv else 'regress'); shutil.rmtree(out, ignore_errors=True)
+cur = {}
+for f, ids in GOLD.items():
+    rvt = os.path.expanduser('~/rvt-research/corpus/2020/' + f); g = gt.find_gt(rvt)
+    if not ids:   # default: first 4 reliable plan/section views of the baseline
+        b = os.path.join(HERE, 'out', 'baseline.json')
+        ids = [int(k.split(':')[1]) for k in (json.load(open(b)) if os.path.exists(b) else {}) if k.startswith(f + ':')][:4]
+    qav.render(rvt, ids, os.path.join(out, f, 'ours'))
+    for vid in ids:
+        r = qav.run_one(rvt, vid, g, os.path.join(out, f)); s = r.get('summary') or {}
+        cur['%s:%d' % (f, vid)] = dict(ssim=s.get('ssim'), P=s.get('ink_P3'), R=s.get('ink_R3'), text=s.get('text_recall'))
+bp = os.path.join(HERE, 'out', 'baseline.json')
+if '--save' in sys.argv: json.dump(cur, open(bp, 'w'), indent=1); print('baseline saved', len(cur)); sys.exit(0)
+base = json.load(open(bp)) if os.path.exists(bp) else {}; bad = 0
+for k, v in cur.items():
+    b = base.get(k); line = '%-50s ssim %s P %s R %s text %s' % (k, v['ssim'], v['P'], v['R'], v['text'])
+    if b:
+        d = [('ssim', .02), ('P', .03), ('R', .03), ('text', .05)]
+        reg = [n for n, t in d if v[n] is not None and b[n] is not None and v[n] < b[n] - t]
+        if reg: bad += 1; line += '  REGRESSION ' + ','.join(reg)
+        elif any(v[n] is not None and b[n] is not None and v[n] > b[n] + t for n, t in d): line += '  improved'
+    print(line)
+sys.exit(1 if bad else 0)

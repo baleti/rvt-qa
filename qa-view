@@ -7,9 +7,9 @@ from qa import gt, compare
 def render(rvt, vids, cache):
     todo = [v for v in vids if not os.path.exists(os.path.join(cache, '%d.svg' % v))]
     if todo:
-        py = os.path.expanduser('~/src/rvt-sheets/.venv/bin/python')
+        py = os.path.expanduser('~/src/rvt-sheets/.venv/bin/python')   # venv only; code tree chosen by RVTSHEETS_DIR
         cmd = ['systemd-run', '--user', '--scope', '-q', '-p', 'MemoryMax=3G', '-p', 'MemorySwapMax=0', 'nice', '-n', '19', py, os.path.join(HERE, 'qa/render_ours.py'), rvt, cache] + [str(v) for v in todo]
-        subprocess.run(cmd, check=False)
+        subprocess.run(cmd, check=False, env=dict(os.environ))
 def run_one(rvt, vid, gtdir, out, svgin=None):
     vs = gt.views(gtdir); v = vs.get(vid)
     if v is None: raise SystemExit('view %d not in %s' % (vid, gtdir))
