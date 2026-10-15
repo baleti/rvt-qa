@@ -3,3 +3,4 @@
 - Findings (Residential 32, for c5-sheets): door tag texts (A-DOOR-IDEN, e.g. 2'-6" / 6'-8") and many tag texts missing; dimension strings extra/different format.
 - remote-host job qa-dash20 queued via h1dash.sh (remote-host was busy).
 - VLM probe done: SmolVLM-256M useless (64 s, generic). Dashboard on remote-host pending (retry loop h1dash.sh, log /tmp/claude-1000/h1dash.log).
+- 2026-10-15: dashboards on remote-host (capped): Residential 25 views (1 pass, 19 reliable, median SSIM 0.78, ink P/R@3px 0.65/0.56), Commercial 47 (0 pass, 23 reliable, SSIM 0.75, P/R 0.74/0.38), rst basic 76 rows (6 pass, 4 errors, 56 reliable, SSIM 0.80, P/R 0.69/0.55). Low recall = our views drop annotations/tags. 3D views are shaded in Revit's PNG: registration unreliable (reg_score < 0.35 flagged, rely on text findings). Fix: tall exports (3000x11103) downscaled (was OOM at 3 GB). dashboards at out/<file>/dashboard.html.
