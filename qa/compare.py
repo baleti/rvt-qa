@@ -55,6 +55,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
             f = 2200.0 / max(H, W); ref = cv2.resize(ref, (max(1, int(W*f)), max(1, int(H*f))), interpolation=cv2.INTER_AREA); H, W = ref.shape
         o = raster(svg, W, os.path.join(outdir, '%s_ours.png' % vid)); o = cv2.resize(o, (W, H), interpolation=cv2.INTER_AREA)
         w, (s, dx, dy, score, M) = D.register_search(o, ref)
+        res['ref_ink_px'] = int(D.ink(ref).sum())
         res['image'] = dict(scale=round(float(s), 4), shift_px=(int(dx), int(dy)), reg_score=round(float(score), 3))
         for tol in (3, 6):
             p, r = D.ink_pr(w, ref, tol); res['image']['ink_P%d' % tol] = round(float(p), 3); res['image']['ink_R%d' % tol] = round(float(r), 3)
@@ -107,5 +108,6 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
     res['summary'] = dict(ssim=im.get('ssim'), ink_P3=im.get('ink_P3'), ink_R3=im.get('ink_R3'), text_recall=round(tr, 3) if tr is not None else None)
     res['reliable'] = bool(im.get('reg_score', 0) >= 0.35)
     if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
+    if res.get('ref_ink_px', 1e9) < 400: res['findings'].insert(0, dict(kind='trivial-view', score=0.1, note='Revit export has almost no ink; pass/fail is vacuous'))
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
     return res
