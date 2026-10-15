@@ -10,7 +10,9 @@ def raster(svg, w, out):
 def svg_size_mm(svg):
     if svg.endswith('.png'):
         h, w = D.load_gray(svg).shape; return float(w), float(h)
-    m = re.search(r'viewBox="([-\d. ]+)"', open(svg).read(2000)); v = [float(x) for x in m.group(1).split()]
+    m = re.search(r'viewBox="([-\d. ]+)"', open(svg).read(4000))
+    if not m: raise ValueError('our SVG has no viewBox (empty render?)')
+    v = [float(x) for x in m.group(1).split()]
     return v[2], v[3]
 
 def crop_pair(ref, warped, box, path, pad=40):
