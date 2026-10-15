@@ -24,6 +24,8 @@ def score(name, words, secs):
 for e in engines:
     t = time.time()
     if e == 'tess':
+        import shutil
+        if not shutil.which('tesseract'): print('tess: not installed here, skipped'); continue
         import pytesseract
         d = pytesseract.image_to_data(img, config='--psm 11', output_type=pytesseract.Output.DICT)
         words = [(a, x + w / 2, y + h / 2) for a, c, x, y, w, h in zip(d['text'], d['conf'], d['left'], d['top'], d['width'], d['height']) if a.strip() and float(c) > 30]
