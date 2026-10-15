@@ -1,6 +1,6 @@
 """compare_view: our SVG render of a view vs Revit's PNG/DXF export -> ranked findings + crops."""
 import os, subprocess, json, math, numpy as np, cv2, re
-from . import imgdiff as D, vec, layers as LY
+from . import imgdiff as D, vec, layers as LY, pdfvec
 
 def raster(svg, w, out):
     if svg.endswith('.png'): return D.load_gray(svg)
@@ -24,7 +24,7 @@ def crop_pair(ref, warped, box, path, pad=40):
     if sc < 1: pair = cv2.resize(pair, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA)
     cv2.imwrite(path, pair)
 
-def compare_view(svg, meta, png, dxf, outdir, vid):
+def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     os.makedirs(outdir, exist_ok=True); res = dict(id=vid, name=meta.get('name'), findings=[]); F = res['findings']
     if svg.endswith('.svg') and (lambda t: 'viewBox' not in t or re.search(r'viewBox="[-\d.]+ [-\d.]+ [\d.]+ 0\.0+"', t) is not None)(open(svg).read(4000)):
         F.append(dict(kind='view-not-rendered', score=10.0, what='our render is an empty SVG (view type unsupported?)')); res['summary'] = {}; res['pass'] = False; return res
@@ -48,6 +48,24 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
                 rr = o['h']/r['h'] if r['h'] > 0 else 1
                 if abs(math.log(max(rr, 1e-3))) > math.log(1.25): F.append(dict(kind='text-size', score=0.4, what=r['t'], ratio=round(rr, 2), at_mm=(round(o['x'], 1), round(o['y'], 1))))
         else: res['text']['note'] = 'registration failed (too few common strings)'
+    # ---- tier 1b: sheet PDF (paper units): text content/size/position + line-weight inventory
+    if pdf and is_sheet and os.path.exists(pdf) and svg.endswith('.svg'):
+        try:
+            st = open(svg).read(); items = vec.svg_texts(st)
+            ref, m, mi, ex, pg = pdfvec.compare(st, items, pdf)
+            res['pdf_text'] = dict(revit=len(ref), ours=len(items), matched=len(m), missing=len(mi), extra=len(ex))
+            for r in mi: F.append(dict(kind='text-missing', score=1.0 + 0.02 * len(r['t']), what=r['t'], font=r['font'], at_mm=(round(r['x'], 1), round(r['y'], 1))))
+            for o in ex: F.append(dict(kind='text-extra', score=0.8, what=o['t'], at_mm=(round(o['x'], 1), round(o['y'], 1))))
+            for r, o, d in m:
+                if d > 3: F.append(dict(kind='text-moved', score=0.5 + min(d, 60) / 60, what=r['t'], dist_mm=round(d, 1), at_mm=(round(o['x'], 1), round(o['y'], 1))))
+                rr = o['h'] / r['h'] if r['h'] > 0 else 1
+                if o['h'] > 0 and abs(math.log(max(rr, 1e-3))) > math.log(1.15): F.append(dict(kind='text-size', score=0.45, what=r['t'], ratio=round(rr, 2), revit_pt=round(r['h'] / pdfvec.PT, 1), at_mm=(round(o['x'], 1), round(o['y'], 1))))
+            wp, ws = pdfvec.pdf_weights(pdf), pdfvec.svg_weights(st)
+            res['weights_mm'] = dict(revit={str(k): round(v) for k, v in sorted(wp.items())}, ours={str(k): round(v) for k, v in sorted(ws.items())})
+            for k, v in wp.items():
+                near = [vv for kk, vv in ws.items() if abs(kk - k) <= 0.04]
+                if v > 300 and sum(near) < 0.5 * v: F.append(dict(kind='lineweight-missing', score=0.9, weight_mm=k, revit_len_mm=round(v), ours_len_mm=round(sum(near))))
+        except Exception as ex: res['pdf_note'] = repr(ex)[:150]
     # ---- tier 2: image diff
     if png and os.path.exists(png):
         ref = D.load_gray(png); H, W = ref.shape

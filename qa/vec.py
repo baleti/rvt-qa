@@ -31,10 +31,10 @@ def svg_texts(svg):
     for m in _tr.finditer(svg):
         a, body = m.group(1), m.group(2)
         tm = re.search(r'translate\(([-\d.e]+)[ ,]([-\d.e]+)\)', a); rm = re.search(r'rotate\(([-\d.e]+)', a)
-        sm = re.search(r'font-size="([-\d.e]+)"', a); em = re.search(r'data-e="(\d+)"', a)
+        sm = re.search(r'font-size="([-\d.e]+)"', a); em = re.search(r'data-e="(\d+)"', a); an = re.search(r'text-anchor="(\w+)"', a)
         s = html.unescape(re.sub(r"<[^>]+>", " ", body)); s = " ".join(s.split())
         if not s or not tm: continue
-        out.append(dict(t=s, x=float(tm.group(1)), y=float(tm.group(2)), h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None))
+        out.append(dict(t=s, x=float(tm.group(1)), y=float(tm.group(2)), h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start'))
     return out
 
 def norm(s): return re.sub(r'\s+', '', s).lower()

@@ -20,3 +20,6 @@ See PROGRESS.md.
 ## Model survey (CPU, local)
 - SmolVLM-256M-Instruct (transformers, torch CPU, 4 threads): 64 s per two-image crop, answer is generic ("plan view of a building"), cannot list missing labels. NOT useful for diffs at this size. Larger VLMs (Qwen2-VL-2B) would need remote-host and are expected to be too slow/inexact for per-crop diffs; numeric tiers (DXF text, ink maps, Hough lines) are faster and exact, so VLMs are left for final human/Claude crop review only.
 - tesseract OCR on Revit PNGs (~1200 px wide): 4/28 words matched; unusable at that resolution. DXF text is the ground truth for text.
+
+## Sheet PDF tier (qa/pdfvec.py)
+For ViewSheet exports with a Revit PDF (2022+ scenes, page = paper, 1 pt = 0.3528 mm): text spans (content, size in pt, font, position compared at the SVG's own text-anchor) and line weight inventory (stroke length per width class, both sides). Findings: text-missing/extra/moved/size, lineweight-missing. 2026_view_sheet_var sheet 303711: Revit 46 text spans vs ours 26 (21 matched; title-block consultant/address blocks missing; 3 labels 0.57x size), line weights 0.10 mm and 0.25 mm present on both sides (0.25 mm length identical 5078 mm, 0.10 mm 6359 vs 7209 mm).

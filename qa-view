@@ -21,7 +21,7 @@ def run_one(rvt, vid, gtdir, out, svgin=None):
     meta = json.load(open(os.path.join(cache, '%d.json' % vid)))
     if not meta.get('scale'): meta['scale'] = int(v['scale'].split('=')[1]) or None
     f = lambda e: os.path.join(gtdir, '%d.%s' % (vid, e)) if '%d.%s' % (vid, e) in v['files'] else None
-    return compare.compare_view(svg, meta, f('png'), f('dxf'), os.path.join(out, 'diff'), vid)
+    return compare.compare_view(svg, meta, f('png'), f('dxf'), os.path.join(out, 'diff'), vid, pdf=f('pdf'), is_sheet=(v['cls'] == 'ViewSheet'))
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); ap.add_argument('file'); ap.add_argument('view', type=int); ap.add_argument('--gt'); ap.add_argument('--out'); ap.add_argument('--svg')
     a = ap.parse_args(); rvt = os.path.abspath(a.file); gtdir = a.gt or gt.find_gt(rvt)
