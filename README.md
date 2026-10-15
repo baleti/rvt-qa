@@ -42,3 +42,6 @@ OCR benchmark (ground truth = the SVG's own text, our render of Residential view
 | tesseract --psm 11 | 3000 | 3.9 | 0.28 | 0.36 |
 | tesseract --psm 11 | 6000 | 6.6 | 0.39 | 0.55 |
 EasyOCR and docTR exceeded the 3 GB remote-host cap (OOM-killed, 3 attempts): MEMORY RULE from the orchestrator: no ML/OCR benchmarks on remote-host; they run on remote-host via `h1run run qaocr -- ./bench_h1.sh` (results in out/bench/ocr.txt). PaddleOCR: no paddlepaddle wheel for Python 3.14 (pip: no matching distribution), skipped. Conclusion so far: OCR stays a fallback, vector text (DXF/PDF) is the reference.
+
+## Vector geometry tier (qa/vecgeom.py, remote-host-light: 0.6 GB RSS, ~20 s per view)
+Revit DXF primitives (per layer) vs our SVG paths (per element id) in paper mm, both sampled every 0.25 mm; scale known (304.8/view scale), translation by FFT + median ICP. Reports recall per Revit layer, extra-ink ranking per OUR element id (precision offenders, ids can be looked up in the reader), chamfer and Hausdorff-95 in mm, overall P/R at 0.6 mm. Residential view 32: recall 0.94, precision 0.73, chamfer 1.87 mm, Hausdorff95 26 mm; weakest layers A-AREA-IDEN 0.21, S-STRS-ANNO 0.26, A-DETL-MBND 0.58; elements 234610 / 234684 / 234150 / 206435 draw 450-640 mm of ink Revit does not have. Each qa-view run also writes out/<file>/defects_<view>.md (ranked table, area, crops).
