@@ -29,6 +29,11 @@ if __name__ == '__main__':
     out = a.out or os.path.join(HERE, 'out', os.path.basename(rvt))
     r = run_one(rvt, a.view, gtdir, out, a.svg)
     json.dump(r, open(os.path.join(out, 'result_%d.json' % a.view), 'w'), indent=1, default=str)
+    md = ['# QA defects: view %s %s' % (r['id'], r.get('name')), '', 'score %s/100, %s' % (r.get('score'), 'PASS' if r.get('pass') else 'FAIL'), '', '| # | area | kind | detail | crop |', '|---|---|---|---|---|']
+    for i, f in enumerate(r.get('findings', [])[:40]):
+        det = ', '.join('%s=%s' % (k, v) for k, v in f.items() if k not in ('kind', 'score', 'box_px', 'area', 'crop', 'seg_px'))
+        md.append('| %d | %s | %s | %s | %s |' % (i + 1, f.get('area'), f['kind'], det.replace('|', '/'), ('![](%s)' % os.path.relpath(f['crop'], out)) if f.get('crop') else ''))
+    open(os.path.join(out, 'defects_%d.md' % a.view), 'w').write('\n'.join(md))
     print('VIEW %s %s  %s' % (r['id'], r.get('name'), 'PASS' if r.get('pass') else 'FAIL'))
     print('SCORE', r.get('score'), '/100')
     print('summary', r.get('summary'), '\ntext', r.get('text'), '\nimage', r.get('image'))
