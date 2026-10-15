@@ -35,3 +35,10 @@ Tile benchmark (qa/bench_tiles.py, Residential view 32, 6x9 tiles of the aligned
 | DINOv2-small CLS per tile | 45 | 0.52 | slow, no better than chamfer |
 Take-away: rank tiles with LPIPS + edge chamfer; DINOv2 patch embeddings not worth it at this size.
 Text compare fix (2026-10-15, from c2-annot): SVG text-anchor (end/middle) is converted to a left edge and DXF texts split into several MTEXT (e.g. 'vision' 'lite') match inside our longer string: Residential view 32 matched 52 -> 110 of 126, median position error 4.2 -> 1.3 mm.
+
+OCR benchmark (ground truth = the SVG's own text, our render of Residential view 32 at 3000 / 6000 px wide, 204 words >= 5 px tall):
+| engine | width | secs | GT recall | precision |
+|---|---|---|---|---|
+| tesseract --psm 11 | 3000 | 3.9 | 0.28 | 0.36 |
+| tesseract --psm 11 | 6000 | 6.6 | 0.39 | 0.55 |
+EasyOCR and docTR exceeded the 3 GB remote-host cap (OOM-killed, 3 attempts): MEMORY RULE from the orchestrator: no ML/OCR benchmarks on remote-host; they run on remote-host via `h1run run qaocr -- ./bench_h1.sh` (results in out/bench/ocr.txt). PaddleOCR: no paddlepaddle wheel for Python 3.14 (pip: no matching distribution), skipped. Conclusion so far: OCR stays a fallback, vector text (DXF/PDF) is the reference.

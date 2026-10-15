@@ -36,12 +36,13 @@ def layer_recall(dxf, ours_warped, tol=4):
     if not layers: return None
     per, allr = raster_layers(layers, H, W)
     _, (s, dx, dy, score, M) = D.register_search(allr, ours_warped)   # DXF raster -> our frame
-    A = D.ink(ours_warped); k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2*tol+1, 2*tol+1)); Ad = cv2.dilate(A, k)
+    A = D.ink(ours_warped); dist = cv2.distanceTransform(1 - A, cv2.DIST_L2, 3); k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2*tol+1, 2*tol+1)); Ad = cv2.dilate(A, k)
     rows = []
     for name, im in per.items():
         w = cv2.warpAffine(im, M, (W, H), flags=cv2.INTER_NEAREST, borderValue=255)
         B = D.ink(w, 128); n = int(B.sum())
         if n < 30: continue
-        rows.append(dict(layer=name, ink_px=n, recall=round(float((B & Ad).sum()) / n, 3)))
+        dd = dist[B > 0]
+        rows.append(dict(layer=name, ink_px=n, recall=round(float((B & Ad).sum()) / n, 3), chamfer_px=round(float(dd.mean()), 1), hausdorff95_px=round(float(np.percentile(dd, 95)), 1)))
     rows.sort(key=lambda r: -r['ink_px'] * (1 - r['recall']))
     return dict(reg_score=round(float(score), 3), layers=rows)
