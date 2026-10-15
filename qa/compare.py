@@ -92,5 +92,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
     im = res.get('image', {}); tx = res.get('text', {})
     tr = tx.get('matched', 0) / max(tx.get('revit', 1), 1) if 'matched' in tx else None
     res['summary'] = dict(ssim=im.get('ssim'), ink_P3=im.get('ink_P3'), ink_R3=im.get('ink_R3'), text_recall=round(tr, 3) if tr is not None else None)
+    res['reliable'] = bool(im.get('reg_score', 0) >= 0.35)
+    if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
     return res
