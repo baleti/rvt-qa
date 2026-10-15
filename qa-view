@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""qa-view FILE.rvt VIEWID [--gt DIR] [--out DIR] [--svg OURS.svg] [--refresh]
+Renders our view (rvt-sheets), compares with Revit's PNG/DXF export of the same view and prints a ranked difference list with crops."""
+import sys, os, json, subprocess, argparse
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
+from qa import gt, compare
+def render(rvt, vids, cache):
+    todo = [v for v in vids if not os.path.exists(os.path.join(cache, '%d.svg' % v))]
+    if todo:
+        py = os.path.expanduser('~/src/rvt-sheets/.venv/bin/python')
+        cmd = ['systemd-run', '--user', '--scope', '-q', '-p', 'MemoryMax=3G', '-p', 'MemorySwapMax=0', 'nice', '-n', '19', py, os.path.join(HERE, 'qa/render_ours.py'), rvt, cache] + [str(v) for v in todo]
+        subprocess.run(cmd, check=False)
+def run_one(rvt, vid, gtdir, out, svgin=None):
+    vs = gt.views(gtdir); v = vs.get(vid)
+    if v is None: raise SystemExit('view %d not in %s' % (vid, gtdir))
+    cache = os.path.join(out, 'ours'); os.makedirs(cache, exist_ok=True)
+    if svgin: os.makedirs(cache, exist_ok=True); open(os.path.join(cache, '%d.svg' % vid), 'w').write(open(svgin).read()); json.dump(dict(id=vid, scale=int(v['scale'].split('=')[1]) or None, name=v['name']), open(os.path.join(cache, '%d.json' % vid), 'w'))
+    else: render(rvt, [vid], cache)
+    svg = os.path.join(cache, '%d.svg' % vid)
+    if not os.path.exists(svg): return dict(id=vid, name=v['name'], error='render failed')
+    meta = json.load(open(os.path.join(cache, '%d.json' % vid)))
+    if not meta.get('scale'): meta['scale'] = int(v['scale'].split('=')[1]) or None
+    f = lambda e: os.path.join(gtdir, '%d.%s' % (vid, e)) if '%d.%s' % (vid, e) in v['files'] else None
+    return compare.compare_view(svg, meta, f('png'), f('dxf'), os.path.join(out, 'diff'), vid)
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser(); ap.add_argument('file'); ap.add_argument('view', type=int); ap.add_argument('--gt'); ap.add_argument('--out'); ap.add_argument('--svg')
+    a = ap.parse_args(); rvt = os.path.abspath(a.file); gtdir = a.gt or gt.find_gt(rvt)
+    if not gtdir: raise SystemExit('no Revit export (gt_views) found for this file; pass --gt DIR')
+    out = a.out or os.path.join(HERE, 'out', os.path.basename(rvt))
+    r = run_one(rvt, a.view, gtdir, out, a.svg)
+    json.dump(r, open(os.path.join(out, 'result_%d.json' % a.view), 'w'), indent=1, default=str)
+    print('VIEW %s %s  %s' % (r['id'], r.get('name'), 'PASS' if r.get('pass') else 'FAIL'))
+    print('summary', r.get('summary'), '\ntext', r.get('text'), '\nimage', r.get('image'))
+    for i, f in enumerate(r.get('findings', [])[:20]):
+        print('%2d. [%.2f] %-15s %s' % (i + 1, f['score'], f['kind'], {k: v for k, v in f.items() if k not in ('kind', 'score', 'box_px')}))
