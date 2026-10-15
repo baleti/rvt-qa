@@ -66,3 +66,7 @@ Revit sheet has 46 text spans, ours 26: missing the title-block consultant/addre
 
 ## Combined score and routing (new)
 `qa-view` prints `SCORE n/100` (0.30 ink recall@6px + 0.20 precision@6px + 0.25 DXF text recall + 0.10 grid-line match + 0.15 layer-ink recall, weights renormalised over available tiers) and every finding has `-> area` (annotations/text, grids, line weights, layer X, view not rendered, drawing content) so work can be routed without looking at images. Residential view 32 now: 84.5/100 (text recall 0.87, ink R/P@6px 0.79/0.94).
+
+## Update (geometry crops)
+- defects_<view>.md now lists geom-extra-element / geom-layer-missing with a Revit | ours | overlay crop. Residential view 32: elements 234610/234684/234150/234712/234330 are dimension tick/witness ink Revit does not draw there (check dimension tick and witness-line placement); layers A-AREA-IDEN, A-DETL-MBND are under-drawn.
+- Full-tier dashboards (out2/, remote-host job qadash2) are queued; results land in ~/src/rvt-qa/out2/<file>/dashboard.html.
