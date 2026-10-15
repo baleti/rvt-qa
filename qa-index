@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""qa-index -> out/index.html: one page over all out/*/results.jsonl (per file: views, pass, reliable, medians) with the worst views and links to overlays/crops."""
+import json, glob, os, html, statistics as st
+HERE = os.path.dirname(os.path.abspath(__file__)); out = os.path.join(HERE, 'out')
+h = ['<!doctype html><meta charset=utf-8><title>QA index</title><style>body{font:14px sans-serif;margin:16px}td,th{border:1px solid #ccc;padding:3px 8px}.f{background:#fdd}.p{background:#dfd}</style><h2>rvt-qa: our views vs Revit exports</h2><table><tr><th>file<th>views<th>pass<th>reliable<th>median SSIM<th>ink P@3<th>ink R@3<th>top problem kinds</tr>']
+for f in sorted(glob.glob(out + '/*/results.jsonl')):
+    name = os.path.basename(os.path.dirname(f)); rows = [json.loads(l) for l in open(f)]; seen = {}
+    for r in rows: seen[r['id']] = r
+    rows = list(seen.values()); ok = [r for r in rows if 'error' not in r and r.get('summary')]
+    rel = [r for r in ok if r.get('reliable', True) and not any(x['kind'] == 'trivial-view' for x in r.get('findings', []))]
+    med = lambda k: round(st.median([r['summary'][k] for r in rel if r['summary'].get(k) is not None]), 3) if rel else ''
+    kinds = {}
+    for r in rows:
+        for x in r.get('findings', []): kinds[x['kind']] = kinds.get(x['kind'], 0) + 1
+    top = ', '.join('%s %d' % kv for kv in sorted(kinds.items(), key=lambda kv: -kv[1])[:5])
+    h.append('<tr class=%s><td><a href="%s/dashboard.html">%s</a><td>%d<td>%d<td>%d<td>%s<td>%s<td>%s<td>%s</tr>' % ('p' if rows and all(r.get('pass') for r in rows) else 'f', html.escape(name), html.escape(name), len(rows), sum(bool(r.get('pass')) for r in rows), len(rel), med('ssim'), med('ink_P3'), med('ink_R3'), html.escape(top)))
+h.append('</table>')
+open(os.path.join(out, 'index.html'), 'w').write('\n'.join(h)); print('wrote out/index.html')
