@@ -23,3 +23,15 @@ See PROGRESS.md.
 
 ## Sheet PDF tier (qa/pdfvec.py)
 For ViewSheet exports with a Revit PDF (2022+ scenes, page = paper, 1 pt = 0.3528 mm): text spans (content, size in pt, font, position compared at the SVG's own text-anchor) and line weight inventory (stroke length per width class, both sides). Findings: text-missing/extra/moved/size, lineweight-missing. 2026_view_sheet_var sheet 303711: Revit 46 text spans vs ours 26 (21 matched; title-block consultant/address blocks missing; 3 labels 0.57x size), line weights 0.10 mm and 0.25 mm present on both sides (0.25 mm length identical 5078 mm, 0.10 mm 6359 vs 7209 mm).
+
+## Survey results (measured, remote-host, 4 threads, nice 19)
+Tile benchmark (qa/bench_tiles.py, Residential view 32, 6x9 tiles of the aligned pair; score = Spearman rank correlation with the ink-diff (missing+extra px) tile score; cost for all 54 tiles):
+| method | secs | Spearman | verdict |
+|---|---|---|---|
+| SSIM per tile | 0.4 | 0.33 | weak (white areas dominate) |
+| MS-SSIM (3 scales) | 0.6 | 0.57 | ok |
+| Canny edge chamfer | 0.2 | 0.66 | good and nearly free |
+| LPIPS (AlexNet, 128 px tiles) | 3.4 | 0.79 | best tile ranker, cheap on CPU |
+| DINOv2-small CLS per tile | 45 | 0.52 | slow, no better than chamfer |
+Take-away: rank tiles with LPIPS + edge chamfer; DINOv2 patch embeddings not worth it at this size.
+Text compare fix (2026-10-15, from c2-annot): SVG text-anchor (end/middle) is converted to a left edge and DXF texts split into several MTEXT (e.g. 'vision' 'lite') match inside our longer string: Residential view 32 matched 52 -> 110 of 126, median position error 4.2 -> 1.3 mm.
