@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+"""qa-img OURS.png REVIT.png [--out DIR] : image-only comparison (no DXF), e.g. the sheet L2 reference pair"""
+import sys, os, json
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
+from qa import compare
+a = sys.argv[1:]; out = a[a.index('--out') + 1] if '--out' in a else os.path.join(HERE, 'out', 'img')
+r = compare.compare_view(os.path.abspath(a[0]), {'name': os.path.basename(a[0])}, os.path.abspath(a[1]), None, out, os.path.splitext(os.path.basename(a[0]))[0])
+json.dump(r, open(os.path.join(out, 'result.json'), 'w'), indent=1, default=str)
+print('PASS' if r['pass'] else 'FAIL', r['summary'], r.get('lines'))
+for i, f in enumerate(r['findings'][:25]): print('%2d. [%.2f] %-16s %s' % (i + 1, f['score'], f['kind'], {k: v for k, v in f.items() if k not in ('kind', 'score', 'seg_px')}))

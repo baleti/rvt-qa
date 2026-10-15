@@ -3,10 +3,13 @@ import os, subprocess, json, math, numpy as np, cv2, re
 from . import imgdiff as D, vec
 
 def raster(svg, w, out):
+    if svg.endswith('.png'): return D.load_gray(svg)
     subprocess.run(['rsvg-convert', '-w', str(w), '-b', 'white', svg, '-o', out], check=True)
     return D.load_gray(out)
 
 def svg_size_mm(svg):
+    if svg.endswith('.png'):
+        h, w = D.load_gray(svg).shape; return float(w), float(h)
     m = re.search(r'viewBox="([-\d. ]+)"', open(svg).read(2000)); v = [float(x) for x in m.group(1).split()]
     return v[2], v[3]
 
@@ -60,6 +63,14 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
             if tot < 150: continue
             kind = 'region-missing' if c['missing'] > 1.5*c['extra'] else 'region-extra' if c['extra'] > 1.5*c['missing'] else 'region-differs'
             F.append(dict(kind=kind, score=min(2.0, tot/4000), box_px=c['box'], missing_px=c['missing'], extra_px=c['extra'], cell=(c['i'], c['j'])))
+        lr, lo = D.long_lines(ref, 0.2), D.long_lines(w, 0.2)
+        pairs, lmiss, lextra = D.match_lines(lo, lr, tol=10)
+        res['lines'] = dict(revit=len(lr), ours=len(lo), matched=len(pairs), missing=len(lmiss), extra=len(lextra))
+        for sg in lmiss: F.append(dict(kind='longline-missing', score=1.2, box_px=(min(sg[0], sg[2]), min(sg[1], sg[3]), max(sg[0], sg[2]), max(sg[1], sg[3])), seg_px=sg))
+        for sg in lextra: F.append(dict(kind='longline-extra', score=1.0, box_px=(min(sg[0], sg[2]), min(sg[1], sg[3]), max(sg[0], sg[2]), max(sg[1], sg[3])), seg_px=sg))
+        for i, j, d, dl in pairs:
+            if abs(dl) > 0.15*max(1.0, math.hypot(lr[j][2]-lr[j][0], lr[j][3]-lr[j][1])):
+                F.append(dict(kind='longline-extent', score=0.9, length_diff_px=round(float(dl)), box_px=(min(lr[j][0], lr[j][2]), min(lr[j][1], lr[j][3]), max(lr[j][0], lr[j][2]), max(lr[j][1], lr[j][3]))))
         # crops for text findings through the same mapping (our mm -> px -> warp)
         sw, sh = svg_size_mm(svg)
         for f in F:
