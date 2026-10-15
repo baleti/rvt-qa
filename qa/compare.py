@@ -47,6 +47,8 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
     # ---- tier 2: image diff
     if png and os.path.exists(png):
         ref = D.load_gray(png); H, W = ref.shape
+        if max(H, W) > 2200:    # work at reduced size: tall sections can be 3000x11000 px
+            f = 2200.0 / max(H, W); ref = cv2.resize(ref, (max(1, int(W*f)), max(1, int(H*f))), interpolation=cv2.INTER_AREA); H, W = ref.shape
         o = raster(svg, W, os.path.join(outdir, '%s_ours.png' % vid)); o = cv2.resize(o, (W, H), interpolation=cv2.INTER_AREA)
         w, (s, dx, dy, score, M) = D.register_search(o, ref)
         res['image'] = dict(scale=round(float(s), 4), shift_px=(int(dx), int(dy)), reg_score=round(float(score), 3))
