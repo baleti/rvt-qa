@@ -1,6 +1,6 @@
 """compare_view: our SVG render of a view vs Revit's PNG/DXF export -> ranked findings + crops."""
 import os, subprocess, json, math, numpy as np, cv2, re
-from . import imgdiff as D, vec
+from . import imgdiff as D, vec, layers as LY
 
 def raster(svg, w, out):
     if svg.endswith('.png'): return D.load_gray(svg)
@@ -65,6 +65,15 @@ def compare_view(svg, meta, png, dxf, outdir, vid):
             if tot < 150: continue
             kind = 'region-missing' if c['missing'] > 1.5*c['extra'] else 'region-extra' if c['extra'] > 1.5*c['missing'] else 'region-differs'
             F.append(dict(kind=kind, score=min(2.0, tot/4000), box_px=c['box'], missing_px=c['missing'], extra_px=c['extra'], cell=(c['i'], c['j'])))
+        if dxf and os.path.exists(dxf):
+            try:
+                lyr = LY.layer_recall(dxf, w)
+                if lyr and lyr['reg_score'] >= 0.3:
+                    res['layers'] = lyr['layers'][:25]
+                    for r in lyr['layers'][:6]:
+                        if r['recall'] < 0.6 and r['ink_px'] > 400: F.append(dict(kind='layer-missing', score=0.8 + (1 - r['recall']), what=r['layer'], recall=r['recall'], ink_px=r['ink_px']))
+                else: res['layers_note'] = 'dxf raster registration unreliable'
+            except Exception as ex: res['layers_note'] = repr(ex)[:120]
         lr, lo = D.long_lines(ref, 0.2), D.long_lines(w, 0.2)
         pairs, lmiss, lextra = D.match_lines(lo, lr, tol=10)
         res['lines'] = dict(revit=len(lr), ours=len(lo), matched=len(pairs), missing=len(lmiss), extra=len(lextra))
