@@ -1,6 +1,6 @@
 """compare_view: our SVG render of a view vs Revit's PNG/DXF export -> ranked findings + crops."""
 import os, subprocess, json, math, numpy as np, cv2, re
-from . import imgdiff as D, vec, layers as LY, pdfvec
+from . import imgdiff as D, vec, layers as LY, pdfvec, vecgeom
 
 def raster(svg, w, out):
     if svg.endswith('.png'): return D.load_gray(svg)
@@ -48,6 +48,17 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
                 rr = o['h']/r['h'] if r['h'] > 0 else 1
                 if abs(math.log(max(rr, 1e-3))) > math.log(1.25): F.append(dict(kind='text-size', score=0.4, what=r['t'], ratio=round(rr, 2), at_mm=(round(o['x'], 1), round(o['y'], 1))))
         else: res['text']['note'] = 'registration failed (too few common strings)'
+    # ---- tier 1a: vector geometry (DXF primitives vs our SVG paths, paper mm)
+    if dxf and os.path.exists(dxf) and meta.get('scale') and not is_sheet and svg.endswith('.svg'):
+        try:
+            g = vecgeom.compare(open(svg).read(), dxf, meta['scale'])
+            if g:
+                res['geom'] = {k: v for k, v in g.items() if k not in ('layers', 'extra_elements')}; res['geom_layers'] = g['layers']; res['geom_extra_elements'] = g['extra_elements']
+                for r in g['layers'][:8]:
+                    if r['recall'] < 0.7 and r['len_mm'] > 40: F.append(dict(kind='geom-layer-missing', score=0.9 + (1 - r['recall']), what=r['layer'], recall=r['recall'], len_mm=r['len_mm']))
+                for r in g['extra_elements'][:6]:
+                    if r['extra_mm'] > 30: F.append(dict(kind='geom-extra-element', score=0.7 + min(r['extra_mm'], 400) / 400, what='element %s' % r['element'], extra_mm=r['extra_mm'], of_mm=r['of_mm']))
+        except Exception as ex: res['geom_note'] = repr(ex)[:150]
     # ---- tier 1b: sheet PDF (paper units): text content/size/position + line-weight inventory
     if pdf and is_sheet and os.path.exists(pdf) and svg.endswith('.svg'):
         try:
@@ -136,7 +147,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
         k = f['kind']; w = str(f.get('what', ''))
         f['area'] = ('annotations/text' if k.startswith('text') else 'grids' if k.startswith(('longline', 'bubble')) or 'GRID' in w else
                      'line weights' if k.startswith('lineweight') else 'view not rendered' if k in ('view-not-rendered', 'registration-unreliable') else
-                     'layer ' + w if k == 'layer-missing' else 'drawing content')
+                     'layer ' + w if k in ('layer-missing', 'geom-layer-missing') else ('extra drawn ' + w) if k == 'geom-extra-element' else 'drawing content')
     res['reliable'] = bool(im.get('reg_score', 0) >= 0.35)
     if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
     if res.get('ref_ink_px', 1e9) < 400: res['findings'].insert(0, dict(kind='trivial-view', score=0.1, note='Revit export has almost no ink; pass/fail is vacuous'))
