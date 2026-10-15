@@ -16,3 +16,7 @@ ink P/R at 6 px >= 0.85 and text recall >= 0.9.
 
 ## Status
 See PROGRESS.md.
+
+## Model survey (CPU, local)
+- SmolVLM-256M-Instruct (transformers, torch CPU, 4 threads): 64 s per two-image crop, answer is generic ("plan view of a building"), cannot list missing labels. NOT useful for diffs at this size. Larger VLMs (Qwen2-VL-2B) would need remote-host and are expected to be too slow/inexact for per-crop diffs; numeric tiers (DXF text, ink maps, Hough lines) are faster and exact, so VLMs are left for final human/Claude crop review only.
+- tesseract OCR on Revit PNGs (~1200 px wide): 4/28 words matched; unusable at that resolution. DXF text is the ground truth for text.
