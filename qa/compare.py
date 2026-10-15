@@ -124,6 +124,19 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     im = res.get('image', {}); tx = res.get('text', {})
     tr = tx.get('matched', 0) / max(tx.get('revit', 1), 1) if 'matched' in tx else None
     res['summary'] = dict(ssim=im.get('ssim'), ink_P3=im.get('ink_P3'), ink_R3=im.get('ink_R3'), text_recall=round(tr, 3) if tr is not None else None)
+    # combined 0-100 score (weights renormalised over the tiers available)
+    parts = []
+    if im: parts += [(0.30, im.get('ink_R6', 0)), (0.20, im.get('ink_P6', 0))]
+    if tr is not None: parts.append((0.25, tr))
+    if res.get('lines') and res['lines']['revit']: parts.append((0.10, res['lines']['matched'] / res['lines']['revit']))
+    if res.get('layers'):
+        tot = sum(x['ink_px'] for x in res['layers']); parts.append((0.15, sum(x['ink_px'] * x['recall'] for x in res['layers']) / max(tot, 1)))
+    res['score'] = round(100 * sum(w * v for w, v in parts) / sum(w for w, _ in parts), 1) if parts else None
+    for f in F:   # owner hint so findings can be routed without anyone looking at pixels
+        k = f['kind']; w = str(f.get('what', ''))
+        f['area'] = ('annotations/text' if k.startswith('text') else 'grids' if k.startswith(('longline', 'bubble')) or 'GRID' in w else
+                     'line weights' if k.startswith('lineweight') else 'view not rendered' if k in ('view-not-rendered', 'registration-unreliable') else
+                     'layer ' + w if k == 'layer-missing' else 'drawing content')
     res['reliable'] = bool(im.get('reg_score', 0) >= 0.35)
     if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
     if res.get('ref_ink_px', 1e9) < 400: res['findings'].insert(0, dict(kind='trivial-view', score=0.1, note='Revit export has almost no ink; pass/fail is vacuous'))
