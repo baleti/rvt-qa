@@ -18,11 +18,12 @@ def svg_size_mm(svg):
 def crop_pair(ref, warped, box, path, pad=40):
     x0, y0, x1, y1 = [int(v) for v in box]; H, W = ref.shape
     x0, y0, x1, y1 = max(0, x0-pad), max(0, y0-pad), min(W, x1+pad), min(H, y1+pad)
+    if x1 - x0 < 8 or y1 - y0 < 8: return False
     a = cv2.cvtColor(ref[y0:y1, x0:x1], cv2.COLOR_GRAY2BGR); b = cv2.cvtColor(warped[y0:y1, x0:x1], cv2.COLOR_GRAY2BGR)
     ov = np.dstack([warped[y0:y1, x0:x1], warped[y0:y1, x0:x1], ref[y0:y1, x0:x1]])   # red = Revit only, cyan = ours only
     pair = np.hstack([a, b, ov]); sc = min(1.0, 1800 / pair.shape[1]); 
     if sc < 1: pair = cv2.resize(pair, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA)
-    cv2.imwrite(path, pair)
+    cv2.imwrite(path, pair); return True
 
 def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     os.makedirs(outdir, exist_ok=True); res = dict(id=vid, name=meta.get('name'), findings=[]); F = res['findings']
@@ -130,7 +131,8 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     F.sort(key=lambda f: -f['score'])
     for n, f in enumerate(F[:12]):
         if 'box_px' in f and 'image' in res:
-            f['crop'] = os.path.join(outdir, '%s_f%02d_%s.png' % (vid, n, f['kind'])); crop_pair(ref, w, f['box_px'], f['crop'])
+            f['crop'] = os.path.join(outdir, '%s_f%02d_%s.png' % (vid, n, f['kind']))
+            if not crop_pair(ref, w, f['box_px'], f['crop']): del f['crop']
     # overall verdict
     im = res.get('image', {}); tx = res.get('text', {})
     tr = tx.get('matched', 0) / max(tx.get('revit', 1), 1) if 'matched' in tx else None
