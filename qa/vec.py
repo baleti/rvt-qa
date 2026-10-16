@@ -1,5 +1,5 @@
 """Vector-level semantic diff: text items (content, position, height, rotation) of Revit's DXF vs our SVG, registered by voting on identical strings."""
-import re, math, collections, html
+import math, re, math, collections, html
 import numpy as np
 
 def dxf_texts(fn):
@@ -32,8 +32,17 @@ def svg_texts(svg):
         a, body = m.group(1), m.group(2)
         tm = re.search(r'translate\(([-\d.e]+)[ ,]([-\d.e]+)\)', a); rm = re.search(r'rotate\(([-\d.e]+)', a)
         sm = re.search(r'font-size="([-\d.e]+)"', a); em = re.search(r'data-e="(\d+)"', a); an = re.search(r'text-anchor="(\w+)"', a)
+        if not tm: continue
+        h = float(sm.group(1)) if sm else 0; rr = float(rm.group(1)) if rm else 0
+        tsp = re.findall(r'<tspan([^>]*)>(.*?)</tspan>', body, re.S)
+        if len(tsp) > 1 and all('dy="' in ta for ta, _ in tsp):     # wrapped text: Revit exports one MTEXT per line, so match per line
+            cy = 0.0; c, sn = math.cos(math.radians(rr)), math.sin(math.radians(rr))
+            for ta, tb in tsp:
+                cy += float(re.search(r'dy="([-\d.e]+)"', ta).group(1)); st = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", tb)).split())
+                if st: out.append(dict(t=st, x=float(tm.group(1)) - cy * sn, y=float(tm.group(2)) + cy * c, h=h, rot=(-rr) % 360, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start'))
+            continue
         s = html.unescape(re.sub(r"<[^>]+>", " ", body)); s = " ".join(s.split())
-        if not s or not tm: continue
+        if not s: continue
         out.append(dict(t=s, x=float(tm.group(1)), y=float(tm.group(2)), h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start'))
     return out
 
@@ -63,6 +72,13 @@ def left_edge(o):
     a = o.get('anchor', 'start')
     return o['x'] - (w if a == 'end' else w / 2 if a == 'middle' else 0)
 
+def left_edge_xy(o):
+    """left_edge along the text baseline for rotated text (rot is counter-clockwise in o)"""
+    w = 0.5 * o.get('h', 0) * len(o['t']); a = o.get('anchor', 'start')
+    sh = w if a == 'end' else w / 2 if a == 'middle' else 0
+    rr = math.radians(-o.get('rot', 0))
+    return o['x'] - sh * math.cos(rr), o['y'] - sh * math.sin(rr)
+
 def compare_texts(ours, ref, sc, tx, ty, ptol=2.0):
     """ref positions mapped into our frame; greedy match by identical normalised text (or ref text contained in ours: DXF splits multi-word comments into several MTEXT) and nearest position, comparing at the left edge"""
     used = set(); matched = []; missing = []
@@ -73,7 +89,7 @@ def compare_texts(ours, ref, sc, tx, ty, ptol=2.0):
             no = norm(o['t'])
             if no != nr and not (len(nr) >= 2 and nr in no): continue
             if i in used and no == nr: continue
-            d = math.hypot(left_edge(o) - rx, o['y'] - ry)
+            lx, ly = left_edge_xy(o); d = math.hypot(lx - rx, ly - ry)
             if no != nr: d += 0.5          # prefer exact matches
             if best is None or d < best[0]: best = (d, i)
         if best and best[0] <= 40:
