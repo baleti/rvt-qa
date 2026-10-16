@@ -10,7 +10,7 @@ Goal: find simple view/sheet defects BEFORE spending Claude tokens. Local only, 
 Did not help / skipped: OCR (tesseract/EasyOCR/docTR recall 0.4 on our own render, vector text is the reference), PaddleOCR (no wheel for Python 3.14), sheet DXFs (viewports at model scale, not comparable; use PDFs), whole-sheet line/bubble detection (noise). Embedding/VLM tiers are only for flagged tiles on remote-host (see survey).
 
 ## Tools
-- `qa-view FILE.rvt VIEWID [--gt DIR] [--svg OURS.svg]` : renders our view (rvt-sheets venv, capped 3 GB), compares with Revit's PNG + DXF export (default dir ~/rvt-research/gt_views/<match on FILE line of index.tsv>), prints PASS/FAIL, summary, ranked findings; crops (Revit | ours | overlay red=Revit only, cyan=ours only) in out/<file>/diff/.
+- `qa-view FILE.rvt VIEWID [--gt DIR] [--svg OURS.svg]` : renders our view (rvt-sheets venv, capped 3 GB), compares with Revit's PNG + DXF export (default dir ~/rvt-research/gt_views/<match on FILE line of index.tsv>), prints PASS/FAIL, summary, ranked findings; crops (Revit | ours | overlay CYAN=Revit only, RED=ours only) in out/<file>/diff/.
 - `qa-dash FILE.rvt... [--sheets] [--max N]` : all exported views of a file -> out/<file>/results.jsonl + dashboard.html. Heavy: run on remote-host (`./h1dash.sh`).
 
 ## Method (cheap numeric first)
