@@ -88,3 +88,10 @@ See ~/src/rvt-qa/sheets_ranked.md: 16 sheets, worst Column Schedules (rst basic)
 - 28 views with a registered text tier: Revit 736 texts, 685 matched (93%).
 - Dimension strings ("6' - 6 1/4"): Revit's DXF does not contain them (they are in the Revit PNG), so they cannot be checked numerically from DXF; QA now reports ours-only dimension strings as informational `text-extra-dim`. To verify dimensions we need Revit PDFs per view (PyMuPDF text) or visual checks of the crops.
 - Worst text-moved (other text): Residential 246869, 32, 258720 (13-14 each). Worst missing: Commercial 29237 (grid letters 8, text 4). Run `./qa-textcat out3` for the live table.
+
+## Who is the "extra drawn element" (class lookup via reader)
+Repeated ink that Revit's DXF does not have at that place:
+- ProfileRoof 158021 (Residential 29181, 228085, 236647 and section 'typ. eave'): roof profile drawn at ~7 m of ink in views where Revit shows almost none. Check view filtering/cut-plane for profile roofs (section/detail views) in c5-sheets.
+- SWall 206435 (Residential, 2.5 m extra) and SWall 148024/146944/146892 (Commercial 32, 36, 157296 plans): structural walls drawn where Revit draws nothing or something else; likely cut-plane/view-range (wall top above cut) or discipline/visibility.
+- SiteSurface 228877 (Residential 29154, 29181, 236647): topography contour/outline ink in elevations/sections that Revit omits.
+- LinearDimString 234610/234684/234150/234712/234330 (Residential 32): dimension strings (tick/witness ink) offset or extra versus Revit.
