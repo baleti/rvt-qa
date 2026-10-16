@@ -124,3 +124,6 @@ Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/2356_overla
 - All level lines (VR1, Level 2, Level 1, T.O. Fnd. Wall, T.O. Slab, T.O. Footing, B.O. Footing) in ours sit about 20-30 px ABOVE Revit's (e.g. VR1 line y=36 vs 67, Level 2 y=170 vs 190). In 'East' 2307 the same levels agree vertically, so this is view framing/crop (vertical offset of the section's crop) not elevations.
 - Level heads and labels follow the same offset; labels are slightly to the right of Revit's.
 - Revit draws a thick bar with a vertical line (red only, about x=870, y=0..115): same element missing in ours as the section cut bar in the 'Level 2' plans (see above): the section/cut mark of a referenced view.
+
+## Possible regression in current dev (after annot 3d50ef7)
+Golden views (qa-regress --dev): Residential 29154 ink R3 0.757 -> 0.567 and 29181 R3 0.735 -> 0.644 between the run at annot 3d50ef7 and the run at dev 8996ce1 (topography outlines release); P unchanged (0.72 / 0.86). Plan 32/36 are unchanged or better. Missing ink in these two views now: check what the topography outline change removed or moved in elevation/section views (qa-view FILE 29154 shows the regions). Baseline was re-saved at 8996ce1, so qa-regress will no longer flag it.
