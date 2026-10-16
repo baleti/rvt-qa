@@ -107,3 +107,11 @@ Repeated ink that Revit's DXF does not have at that place:
 - Level lines: dash phase differs (ours dashes are offset from Revit's), minor.
 - Our extra 'VR1' / '6096' level head at the top right is cyan-only where Revit has a different label position ('60..' in red).
 Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/2307_overlay.png
+
+## Plan 'VR plan' 303703 (rosetta view_l_section_schedule_var) overlay reading
+Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/303703_overlay.png (red = Revit only, cyan = ours only; crop ~2000 px wide, room about 1050 px wide)
+- NORTH wall: ours draws an extra outline about 190 px above Revit's north wall (outer line at the top of the crop vs Revit's at y=190; inner face agrees at y=208). The wall is drawn about 10x too thick or an extra element sits north of it. South wall: Revit draws an outer line about 20 px below the inner face, ours does not (cyan inner line only), so ours wall thickness/offset is wrong on N and S.
+- Door swing: arc origin and radius differ (ours arc rises to y=580, Revit's to y=640; ours is larger), door leaf line in a different place.
+- East window: ours is at y 350-410, Revit's at y 460-510 (about 110 px higher; window offset along the wall differs).
+- Section head (V-100 / '2') is larger in ours; circle sits higher; the head triangle is bigger (about 1.3x).
+Run: ./qa-view FILE 303703 on 2026_view_l_section_schedule_var.rte (rosetta) to reproduce.
