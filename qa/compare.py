@@ -39,7 +39,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
         sc, tx, ty, nv = vec.vote_registration(ours, R)
         res['text'] = dict(revit=len(ref), ours=len(ours), votes=nv)
         if nv >= 3:
-            m, mi, ex = vec.compare_texts(ours, R, sc, tx, ty); tx_map = (tx, ty)
+            m, mi, ex = vec.compare_texts(ours, R, sc, tx, ty); tx_map = vec.compare_texts.last
             res['text'].update(matched=len(m), missing=len(mi), extra=len(ex))
             pe = [d for _, _, d in m]; res['text']['pos_err_mm_median'] = round(float(np.median(pe)), 2) if pe else None
             hr = [o['h']/r['h'] for r, o, _ in m if r['h'] > 0 and o['h'] > 0]; res['text']['size_ratio_median'] = round(float(np.median(hr)), 3) if hr else None

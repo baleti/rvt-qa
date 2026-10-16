@@ -18,6 +18,7 @@ def dxf_texts(fn):
                 try:
                     if t == 'TEXT': s = e.dxf.text; p = e.dxf.insert; h = e.dxf.height; rot = e.dxf.get('rotation', 0)
                     else: s = e.plain_text() if hasattr(e, 'plain_text') else e.text; p = e.dxf.insert; h = e.dxf.char_height; rot = e.dxf.get('rotation', 0)
+                    if t == 'MTEXT' and not rot and e.dxf.hasattr('text_direction'): td = e.dxf.text_direction; rot = math.degrees(math.atan2(td.y, td.x))   # MTEXT rotation is a direction vector
                     s = clean(s)
                     if s: out.append(dict(t=s, x=p.x*k, y=p.y*k, h=h*k, rot=float(rot) % 360, layer=e.dxf.layer))
                 except Exception: pass
@@ -72,7 +73,25 @@ def left_edge(o):
     a = o.get('anchor', 'start')
     return o['x'] - (w if a == 'end' else w / 2 if a == 'middle' else 0)
 
-def compare_texts(ours, ref, sc, tx, ty, ptol=2.0):
+def left_edge_xy(o):
+    """left_edge along the text baseline for rotated text (rot is counter-clockwise in o)"""
+    w = 0.5 * o.get('h', 0) * len(o['t']); a = o.get('anchor', 'start')
+    sh = w if a == 'end' else w / 2 if a == 'middle' else 0
+    rr = math.radians(-o.get('rot', 0))
+    return o['x'] - sh * math.cos(rr), o['y'] - sh * math.sin(rr)
+
+def compare_texts(ours, ref, sc, tx, ty, ptol=2.0, refine=2):
+    """match, then re-centre the registration on the median residual of the matches (votes on repeated tags can lock onto a neighbouring copy) and match again"""
+    for _ in range(refine + 1):
+        res = _compare_texts(ours, ref, sc, tx, ty, ptol)
+        if _ >= refine or len(res[0]) < 5: break
+        dx = np.median([left_edge_xy(o)[0] - (sc * r['x'] + tx) for r, o, d in res[0]]); dy = np.median([left_edge_xy(o)[1] - (sc * r['y'] + ty) for r, o, d in res[0]])
+        if math.hypot(dx, dy) < 0.5: break
+        tx += dx; ty += dy
+    compare_texts.last = (tx, ty)
+    return res
+
+def _compare_texts(ours, ref, sc, tx, ty, ptol=2.0):
     """ref positions mapped into our frame; greedy match by identical normalised text (or ref text contained in ours: DXF splits multi-word comments into several MTEXT) and nearest position, comparing at the left edge"""
     used = set(); matched = []; missing = []
     for r in ref:
@@ -82,7 +101,7 @@ def compare_texts(ours, ref, sc, tx, ty, ptol=2.0):
             no = norm(o['t'])
             if no != nr and not (len(nr) >= 2 and nr in no): continue
             if i in used and no == nr: continue
-            d = math.hypot(left_edge(o) - rx, o['y'] - ry)
+            lx, ly = left_edge_xy(o); d = math.hypot(lx - rx, ly - ry)
             if no != nr: d += 0.5          # prefer exact matches
             if best is None or d < best[0]: best = (d, i)
         if best and best[0] <= 40:
