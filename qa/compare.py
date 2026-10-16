@@ -39,12 +39,14 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
         sc, tx, ty, nv = vec.vote_registration(ours, R)
         res['text'] = dict(revit=len(ref), ours=len(ours), votes=nv)
         if nv >= 3:
-            m, mi, ex = vec.compare_texts(ours, R, sc, tx, ty); tx_map = (tx, ty)
+            m, mi, ex = vec.compare_texts(ours, R, sc, tx, ty); tx_map = vec.compare_texts.last
             res['text'].update(matched=len(m), missing=len(mi), extra=len(ex))
             pe = [d for _, _, d in m]; res['text']['pos_err_mm_median'] = round(float(np.median(pe)), 2) if pe else None
             hr = [o['h']/r['h'] for r, o, _ in m if r['h'] > 0 and o['h'] > 0]; res['text']['size_ratio_median'] = round(float(np.median(hr)), 3) if hr else None
             for r in mi: F.append(dict(kind='text-missing', score=1.0 + 0.02*len(r['t']), what=r['t'], layer=r['layer'], at_mm=(round(r['mx'], 1), round(r['my'], 1))))
-            for o in ex: F.append(dict(kind='text-extra', score=0.8, what=o['t'], at_mm=(round(o['x'], 1), round(o['y'], 1)), owner=o.get('e')))
+            for o in ex:
+                dim = re.fullmatch(r"[-\d' \"/]+", o['t']) and ("'" in o['t'] or '"' in o['t'])    # Revit's DXF omits dimension strings (they are in its PNG): informational only
+                F.append(dict(kind='text-extra-dim' if dim else 'text-extra', score=0.15 if dim else 0.8, what=o['t'], at_mm=(round(o['x'], 1), round(o['y'], 1)), owner=o.get('e')))
             for r, o, d in m:
                 if d > 6: F.append(dict(kind='text-moved', score=0.5 + min(d, 60)/60, what=r['t'], dist_mm=round(d, 1), at_mm=(round(o['x'], 1), round(o['y'], 1))))
                 rr = o['h']/r['h'] if r['h'] > 0 else 1

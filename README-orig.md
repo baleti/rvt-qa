@@ -2,6 +2,13 @@
 
 Goal: find simple view/sheet defects BEFORE spending Claude tokens. Local only, no external services.
 
+## What worked, in order of value (summary)
+1. Vector text diff against Revit DXF (qa/vec.py): exact, fast (<1 s), 94% of Revit texts matched on the corpus; catches missing/moved/size/wrapped-line text and attributes to layers. Needs per-line splitting of wrapped text, rotated left edge and registration re-centring (all done).
+2. Vector geometry diff (qa/vecgeom.py): DXF lines/curves vs our SVG paths in mm, per-layer recall, chamfer/Hausdorff, extra ink per our element id. ~20 s, 0.6 GB. Best source of actionable "element X draws ink Revit does not".
+3. Image diff with multi-scale registration (qa/imgdiff.py): ink P/R, SSIM, cell heatmap, long lines, bubbles; needed for views without usable DXF.
+4. Combined 0-100 score and owner-routed ranked defect list (defects_<id>.md) with Revit | ours | overlay crops.
+Did not help / skipped: OCR (tesseract/EasyOCR/docTR recall 0.4 on our own render, vector text is the reference), PaddleOCR (no wheel for Python 3.14), sheet DXFs (viewports at model scale, not comparable; use PDFs), whole-sheet line/bubble detection (noise). Embedding/VLM tiers are only for flagged tiles on host1 (see survey).
+
 ## Tools
 - `qa-view FILE.rvt VIEWID [--gt DIR] [--svg OURS.svg]` : renders our view (rvt-sheets venv, capped 3 GB), compares with Revit's PNG + DXF export (default dir ~/rvt-research/gt_views/<match on FILE line of index.tsv>), prints PASS/FAIL, summary, ranked findings; crops (Revit | ours | overlay red=Revit only, cyan=ours only) in out/<file>/diff/.
 - `qa-dash FILE.rvt... [--sheets] [--max N]` : all exported views of a file -> out/<file>/results.jsonl + dashboard.html. Heavy: run on host1 (`./h1dash.sh`).
@@ -45,3 +52,12 @@ EasyOCR and docTR exceeded the 3 GB host3 cap (OOM-killed, 3 attempts): MEMORY R
 
 ## Vector geometry tier (qa/vecgeom.py, host3-light: 0.6 GB RSS, ~20 s per view)
 Revit DXF primitives (per layer) vs our SVG paths (per element id) in paper mm, both sampled every 0.25 mm; scale known (304.8/view scale), translation by FFT + median ICP. Reports recall per Revit layer, extra-ink ranking per OUR element id (precision offenders, ids can be looked up in the reader), chamfer and Hausdorff-95 in mm, overall P/R at 0.6 mm. Residential view 32: recall 0.94, precision 0.73, chamfer 1.87 mm, Hausdorff95 26 mm; weakest layers A-AREA-IDEN 0.21, S-STRS-ANNO 0.26, A-DETL-MBND 0.58; elements 234610 / 234684 / 234150 / 206435 draw 450-640 mm of ink Revit does not have. Each qa-view run also writes out/<file>/defects_<view>.md (ranked table, area, crops).
+
+## Corpus status (dev tree, host1 run, all tiers)
+| file | views | pass | median combined score |
+|---|---|---|---|
+| rst basic | 47 | 7 | 73.2 |
+| Commercial | 28 | 2 | 66.1 |
+| Residential | 29 | 4 | 70.6 |
+
+Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out3` breaks findings down by category. Dimension strings are not in Revit's DXF, so ours-only ones are informational.
