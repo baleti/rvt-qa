@@ -7,3 +7,4 @@
 
 - geom findings now carry at_mm and get a Revit | ours | overlay crop. Residential view 32: top extra elements 234610/234684/234150/234712/234330 sit on dimension strings (tick marks and witness lines drawn where Revit has none or offset); A-AREA-IDEN / A-DETL-MBND layers missing. OCR bench: tesseract is absent on remote-host, bench now skips it (remote-host numbers stand).
 - full-tier dashboards on remote-host (out2/): rst basic 47 views, 3 pass, Commercial 28/0 pass, Residential 29/1 pass; only remaining errors are 16 sheets without a remote-host-rendered SVG. Regression baseline refreshed with geometry tier.
+- baseline re-saved from dev tree (annot 3d50ef7, all-annotation framing): view 36 text 1.0, view 32 text 0.984; numbers identical to the pre-annot baseline.
