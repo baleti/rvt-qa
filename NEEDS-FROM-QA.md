@@ -115,3 +115,6 @@ Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/303703_over
 - East window: ours is at y 350-410, Revit's at y 460-510 (about 110 px higher; window offset along the wall differs).
 - Section head (V-100 / '2') is larger in ours; circle sits higher; the head triangle is bigger (about 1.3x).
 Run: ./qa-view FILE 303703 on 2026_view_l_section_schedule_var.rte (rosetta) to reproduce.
+
+## Plans 'Level 2' 2608 / 2614 and 'Site' 4664 (view_l_section_schedule_var): section marker missing
+Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/2608_overlay.png. The four elevation markers at the view edges match. Revit ALSO draws a section marker in the middle of the view (section head 'V-100' with circle '2', a thin section line to the left and a thick cut-end bar); ours draws NOTHING for it (red only). In 'VR plan' 303703 the same section head is drawn by us (bigger than Revit's), so the section line/head is dropped in these plans, likely when the section's crop/extents are outside or when the section view is not placed on a sheet. 3 views, same cause.
