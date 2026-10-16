@@ -118,3 +118,9 @@ Run: ./qa-view FILE 303703 on 2026_view_l_section_schedule_var.rte (rosetta) to 
 
 ## Plans 'Level 2' 2608 / 2614 and 'Site' 4664 (view_l_section_schedule_var): section marker missing
 Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/2608_overlay.png. The four elevation markers at the view edges match. Revit ALSO draws a section marker in the middle of the view (section head 'V-100' with circle '2', a thin section line to the left and a thick cut-end bar); ours draws NOTHING for it (red only). In 'VR plan' 303703 the same section head is drawn by us (bigger than Revit's), so the section line/head is dropped in these plans, likely when the section's crop/extents are outside or when the section view is not placed on a sheet. 3 views, same cause.
+
+## Section 'West' 2356 (view_l_section_schedule_var) overlay reading
+Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/2356_overlay.png (crop 2000 px wide)
+- All level lines (VR1, Level 2, Level 1, T.O. Fnd. Wall, T.O. Slab, T.O. Footing, B.O. Footing) in ours sit about 20-30 px ABOVE Revit's (e.g. VR1 line y=36 vs 67, Level 2 y=170 vs 190). In 'East' 2307 the same levels agree vertically, so this is view framing/crop (vertical offset of the section's crop) not elevations.
+- Level heads and labels follow the same offset; labels are slightly to the right of Revit's.
+- Revit draws a thick bar with a vertical line (red only, about x=870, y=0..115): same element missing in ours as the section cut bar in the 'Level 2' plans (see above): the section/cut mark of a referenced view.
