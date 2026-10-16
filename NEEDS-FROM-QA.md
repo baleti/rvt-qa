@@ -127,3 +127,9 @@ Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/2356_overla
 
 ## Possible regression in current dev (after annot 3d50ef7)
 Golden views (qa-regress --dev): Residential 29154 ink R3 0.757 -> 0.567 and 29181 R3 0.735 -> 0.644 between the run at annot 3d50ef7 and the run at dev 8996ce1 (topography outlines release); P unchanged (0.72 / 0.86). Plan 32/36 are unchanged or better. Missing ink in these two views now: check what the topography outline change removed or moved in elevation/section views (qa-view FILE 29154 shows the regions). Baseline was re-saved at 8996ce1, so qa-regress will no longer flag it.
+
+## Elevation 'east' 29154 (Residential) overlay reading: crop region not applied on the left
+Overlay: ~/src/rvt-qa/out/regress_dev/20_Residential_Sample_Project.rvt/diff/29154_overlay.png (red = Revit only, cyan = ours only, crop ~2000 px wide).
+- Revit's view is CLIPPED at x~=430-525 on the left (its ground hatch starts at x=430, the house wall at x=525): the left wing of the house (x 280..520: its roof, shingles, siding) is not in Revit's export. Ours draws that wing and the larger roof (cyan) plus the ground hatch out to x=160. So the crop region / far-clip of the elevation drops nothing on the left in our render (the right edge matches: wall x=1320).
+- Consequence in the metrics: ink R3 0.757 -> 0.567 came with this release (extra geometry shifts registration), P unchanged.
+- Section marker: ours puts the 'A-2' section head at x=610 (cyan), Revit at x=1147; level labels 'attic' / 'first floor': ours is to the RIGHT of the head and Revit's to the LEFT of it (labels sit left of the head in Revit, right of it in ours).
