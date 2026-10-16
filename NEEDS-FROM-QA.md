@@ -83,3 +83,8 @@ See ~/src/rvt-qa/sheets_ranked.md: 16 sheets, worst Column Schedules (rst basic)
 ## After annot merge (baseline re-saved)
 - qa text fix: Revit MTEXT rotation (direction vector) is now read, rotated left edge, registration re-centred on match residuals: rotated beam tags in rst 1251893 now median 0.9 mm (was 6.9 mm).
 - Regression vs previous baseline (Residential, fresh render of merged code): view 36 text recall 1.0 -> 0.5: Revit has 8 texts, ours 4; 'A-4' x3 and '3' at (184,56) mm are MISSING now (were present before). View 32 text 0.98 -> 0.87, ink P 0.84 -> 0.75 (more ink outside the Revit framing?). Baseline re-saved to the current numbers as requested; please check view 36 'A-4' tags.
+
+## Text tier by category (qa-textcat, dev tree render, Residential + Commercial + partial rst basic)
+- 28 views with a registered text tier: Revit 736 texts, 685 matched (93%).
+- Dimension strings ("6' - 6 1/4"): Revit's DXF does not contain them (they are in the Revit PNG), so they cannot be checked numerically from DXF; QA now reports ours-only dimension strings as informational `text-extra-dim`. To verify dimensions we need Revit PDFs per view (PyMuPDF text) or visual checks of the crops.
+- Worst text-moved (other text): Residential 246869, 32, 258720 (13-14 each). Worst missing: Commercial 29237 (grid letters 8, text 4). Run `./qa-textcat out3` for the live table.
