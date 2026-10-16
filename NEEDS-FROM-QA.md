@@ -79,3 +79,7 @@ See ~/src/rvt-qa/sheets_ranked.md: 16 sheets, worst Column Schedules (rst basic)
 - The structural column schedule table at lower right is drawn twice-offset: our rows have a larger pitch than Revit's (red rows compress against cyan rows, drifting about 150 px by the bottom), so row height / text size in schedules is too big.
 - Title block texts ("Column Schedules", "Sample House") sit lower and larger than Revit's.
 - qa text: our wrapped text (tspan dy lines) is now split per line, matching Revit's one MTEXT per line. rst basic 1251893: 'Hollow','Sections','(AS' now matched (missing 8, text recall 0.91). Remaining: rotated multi-line tags still show 7-10 mm position offset (text-moved), under investigation.
+
+## After annot merge (baseline re-saved)
+- qa text fix: Revit MTEXT rotation (direction vector) is now read, rotated left edge, registration re-centred on match residuals: rotated beam tags in rst 1251893 now median 0.9 mm (was 6.9 mm).
+- Regression vs previous baseline (Residential, fresh render of merged code): view 36 text recall 1.0 -> 0.5: Revit has 8 texts, ours 4; 'A-4' x3 and '3' at (184,56) mm are MISSING now (were present before). View 32 text 0.98 -> 0.87, ink P 0.84 -> 0.75 (more ink outside the Revit framing?). Baseline re-saved to the current numbers as requested; please check view 36 'A-4' tags.
