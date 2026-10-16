@@ -64,5 +64,5 @@ Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out
 
 ## Refreshing everything after a rvt-sheets release
 1. `rsync -a --exclude '.venv*' --exclude __pycache__ ~/src/rvt-sheets-dev/ remote-host:src/rvt-sheets-dev/`
-2. `./h1queue.sh qaall ./h1all.sh` (queues on remote-host, waits for 11 GB free; delete remote-host out3/*/ours and out4/*/ours to force re-rendering)
+2. `./h1queue.sh qaall ./h1all.sh` (queues on remote-host, waits for 11 GB free)
 3. pull: `rsync -a --exclude ours remote-host:src/rvt-qa/out3/ out3/` (same for out4), then `./qa-textcat out3`, `./qa-index out3`, `./qa-regress --dev` for the golden set.
