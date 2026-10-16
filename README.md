@@ -45,3 +45,12 @@ EasyOCR and docTR exceeded the 3 GB remote-host cap (OOM-killed, 3 attempts): ME
 
 ## Vector geometry tier (qa/vecgeom.py, remote-host-light: 0.6 GB RSS, ~20 s per view)
 Revit DXF primitives (per layer) vs our SVG paths (per element id) in paper mm, both sampled every 0.25 mm; scale known (304.8/view scale), translation by FFT + median ICP. Reports recall per Revit layer, extra-ink ranking per OUR element id (precision offenders, ids can be looked up in the reader), chamfer and Hausdorff-95 in mm, overall P/R at 0.6 mm. Residential view 32: recall 0.94, precision 0.73, chamfer 1.87 mm, Hausdorff95 26 mm; weakest layers A-AREA-IDEN 0.21, S-STRS-ANNO 0.26, A-DETL-MBND 0.58; elements 234610 / 234684 / 234150 / 206435 draw 450-640 mm of ink Revit does not have. Each qa-view run also writes out/<file>/defects_<view>.md (ranked table, area, crops).
+
+## Corpus status (dev tree, remote-host run, all tiers)
+| file | views | pass | median combined score |
+|---|---|---|---|
+| rst basic | 47 | 7 | 73.2 |
+| Commercial | 28 | 2 | 66.1 |
+| Residential | 29 | 4 | 70.6 |
+
+Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out3` breaks findings down by category. Dimension strings are not in Revit's DXF, so ours-only ones are informational.
