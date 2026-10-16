@@ -73,3 +73,8 @@ Revit sheet has 46 text spans, ours 26: missing the title-block consultant/addre
 
 ## Sheets ranked (remote-host image tier)
 See ~/src/rvt-qa/sheets_ranked.md: 16 sheets, worst Column Schedules (rst basic) 54.8, Cover Sheet (Commercial) 59.7, Footing Detail 72.4. Typical defect: ink recall 0.5-0.7 (missing drawing regions) with precision 0.9+. Door tag / dimension string text on sheets needs sheet PDFs from Revit (requested in NEEDS-FROM-ORACLE.md); sheet DXFs are not comparable.
+
+## Sheet 1457199 Column Schedules (rst basic) overlay reading (red = Revit only, cyan = ours only)
+- Two graphical column schedule grids (top and left-middle) are drawn by us but appear as cyan (ours-only) against Revit's export; our output contains the placeholder text "[graphical_column_schedule view not drawn yet: Graphical Column Schedule]" at that spot, so check whether Revit actually draws those grids or an empty frame.
+- The structural column schedule table at lower right is drawn twice-offset: our rows have a larger pitch than Revit's (red rows compress against cyan rows, drifting about 150 px by the bottom), so row height / text size in schedules is too big.
+- Title block texts ("Column Schedules", "Sample House") sit lower and larger than Revit's.
