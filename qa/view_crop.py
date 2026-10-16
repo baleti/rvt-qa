@@ -5,4 +5,4 @@ from rvtsheets.decode import Decoder
 dec = Decoder(sys.argv[1]); doc = dec.doc()
 for i in sys.argv[2:]:
     v = doc['views'].get(int(i)) or {}; c = v.get('crop') or {}
-    print(i, v.get('name'), v.get('kind'), 'crop_active', c.get('crop_active'), 'has_basis', bool(c.get('basis')), 'bounds', c.get('bounds'), 'far', {k: c[k] for k in c if 'far' in k or 'proj' in k or 'depth' in k or 'clip' in k}, 'view_far', {k: v[k] for k in v if 'far' in k or 'depth' in k or 'clip' in k}, flush=True)
+    print(i, v.get('name'), v.get('kind'), 'crop_active', c.get('crop_active'), 'has_basis', bool(c.get('basis')), 'bounds', c.get('bounds'), 'far', {k: c[k] for k in c if 'far' in k or 'proj' in k or 'depth' in k or 'clip' in k}, 'ann', {k: c[k] for k in ('annotation_crop_active', 'annotation_offsets', 'shape', 'origin') if k in c}, 'view_far', {k: v[k] for k in v if 'far' in k or 'depth' in k or 'clip' in k}, flush=True)
