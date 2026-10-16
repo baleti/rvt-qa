@@ -61,3 +61,8 @@ Revit DXF primitives (per layer) vs our SVG paths (per element id) in paper mm, 
 | Residential | 29 | 4 | 70.6 |
 
 Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out3` breaks findings down by category. Dimension strings are not in Revit's DXF, so ours-only ones are informational.
+
+## Refreshing everything after a rvt-sheets release
+1. `rsync -a --exclude '.venv*' --exclude __pycache__ ~/src/rvt-sheets-dev/ host1:src/rvt-sheets-dev/`
+2. `./h1queue.sh qaall ./h1all.sh` (queues on host1, waits for 11 GB free)
+3. pull: `rsync -a --exclude ours host1:src/rvt-qa/out3/ out3/` (same for out4), then `./qa-textcat out3`, `./qa-index out3`, `./qa-regress --dev` for the golden set.
