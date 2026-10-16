@@ -1,5 +1,5 @@
 """Vector-level semantic diff: text items (content, position, height, rotation) of Revit's DXF vs our SVG, registered by voting on identical strings."""
-import re, math, collections, html
+import math, re, math, collections, html
 import numpy as np
 
 def dxf_texts(fn):
@@ -32,8 +32,17 @@ def svg_texts(svg):
         a, body = m.group(1), m.group(2)
         tm = re.search(r'translate\(([-\d.e]+)[ ,]([-\d.e]+)\)', a); rm = re.search(r'rotate\(([-\d.e]+)', a)
         sm = re.search(r'font-size="([-\d.e]+)"', a); em = re.search(r'data-e="(\d+)"', a); an = re.search(r'text-anchor="(\w+)"', a)
+        if not tm: continue
+        h = float(sm.group(1)) if sm else 0; rr = float(rm.group(1)) if rm else 0
+        tsp = re.findall(r'<tspan([^>]*)>(.*?)</tspan>', body, re.S)
+        if len(tsp) > 1 and all('dy="' in ta for ta, _ in tsp):     # wrapped text: Revit exports one MTEXT per line, so match per line
+            cy = 0.0; c, sn = math.cos(math.radians(rr)), math.sin(math.radians(rr))
+            for ta, tb in tsp:
+                cy += float(re.search(r'dy="([-\d.e]+)"', ta).group(1)); st = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", tb)).split())
+                if st: out.append(dict(t=st, x=float(tm.group(1)) - cy * sn, y=float(tm.group(2)) + cy * c, h=h, rot=(-rr) % 360, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start'))
+            continue
         s = html.unescape(re.sub(r"<[^>]+>", " ", body)); s = " ".join(s.split())
-        if not s or not tm: continue
+        if not s: continue
         out.append(dict(t=s, x=float(tm.group(1)), y=float(tm.group(2)), h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start'))
     return out
 
