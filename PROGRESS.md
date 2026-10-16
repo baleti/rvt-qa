@@ -10,3 +10,4 @@
 - baseline re-saved from dev tree (annot 3d50ef7, all-annotation framing): view 36 text 1.0, view 32 text 0.984; numbers identical to the pre-annot baseline.
 
 - qadash3 (remote-host, dev tree annot 3d50ef7, all tiers, sheets included, out3/): 0 errors. rst basic 47 views, 7 pass, median score 73.2; Commercial 28 / 2 pass / 66.1; Residential 29 / 4 pass / 70.6. Text tier: 43 views registered, 1220 of 1295 Revit texts matched (94%). `./qa-textcat out3` for categories.
+- combined score falls back to DXF geometry (recall/precision) + text when image registration is unreliable (details/sections); e.g. Residential 'typ. eave' 4.8 -> 40.4 (recall 0.87, precision 0.075: ProfileRoof/SWall extra ink).
