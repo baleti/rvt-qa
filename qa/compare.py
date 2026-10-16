@@ -154,6 +154,10 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
                      'line weights' if k.startswith('lineweight') else 'view not rendered' if k in ('view-not-rendered', 'registration-unreliable') else
                      'layer ' + w if k in ('layer-missing', 'geom-layer-missing') else ('extra drawn ' + w) if k == 'geom-extra-element' else 'drawing content')
     res['reliable'] = bool(im.get('reg_score', 0) >= 0.35)
+    g = res.get('geom')
+    if not res['reliable'] and g:     # image registration failed: score from the vector tiers instead (DXF geometry in mm, text)
+        gp = [(0.4, g['recall']), (0.35, g['precision'])] + ([(0.25, tr)] if tr is not None else [])
+        res['score'] = round(100 * sum(w * v for w, v in gp) / sum(w for w, _ in gp), 1); res['score_basis'] = 'vector (image registration unreliable)'
     if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
     if res.get('ref_ink_px', 1e9) < 400: res['findings'].insert(0, dict(kind='trivial-view', score=0.1, note='Revit export has almost no ink; pass/fail is vacuous'))
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
