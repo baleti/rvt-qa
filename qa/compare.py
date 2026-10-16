@@ -123,8 +123,8 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
         br, bo = D.line_end_bubbles(ref, lr), D.line_end_bubbles(w, lo)
         bp, bmiss, bextra = D.match_pts(bo, br, tol=18)
         res['bubbles'] = dict(revit=len(br), ours=len(bo), matched=len(bp), missing=len(bmiss), extra=len(bextra))
-        for x, y, r in bmiss: F.append(dict(kind='bubble-missing', score=1.1, box_px=(x-30, y-30, x+30, y+30)))
-        for x, y, r in bextra: F.append(dict(kind='bubble-extra', score=0.9, box_px=(x-30, y-30, x+30, y+30)))
+        for x, y, r in bmiss: F.append(dict(kind='bubble-missing', score=0.3, box_px=(x-30, y-30, x+30, y+30)))
+        for x, y, r in bextra: F.append(dict(kind='bubble-extra', score=0.25, box_px=(x-30, y-30, x+30, y+30)))
         # crops for text findings through the same mapping (our mm -> px -> warp)
         sw, sh = svg_size_mm(svg)
         for f in F:
@@ -154,6 +154,10 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
                      'line weights' if k.startswith('lineweight') else 'view not rendered' if k in ('view-not-rendered', 'registration-unreliable') else
                      'layer ' + w if k in ('layer-missing', 'geom-layer-missing') else ('extra drawn ' + w) if k == 'geom-extra-element' else 'drawing content')
     res['reliable'] = bool(im.get('reg_score', 0) >= 0.35)
+    g = res.get('geom')
+    if not res['reliable'] and g:     # image registration failed: score from the vector tiers instead (DXF geometry in mm, text)
+        gp = [(0.4, g['recall']), (0.35, g['precision'])] + ([(0.25, tr)] if tr is not None else [])
+        res['score'] = round(100 * sum(w * v for w, v in gp) / sum(w for w, _ in gp), 1); res['score_basis'] = 'vector (image registration unreliable)'
     if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
     if res.get('ref_ink_px', 1e9) < 400: res['findings'].insert(0, dict(kind='trivial-view', score=0.1, note='Revit export has almost no ink; pass/fail is vacuous'))
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
