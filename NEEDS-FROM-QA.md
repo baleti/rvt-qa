@@ -101,3 +101,9 @@ Repeated ink that Revit's DXF does not have at that place:
 - Failing in view_l_section_schedule_var: plans 'VR plan' 303703 (60.2), 'Level 2' 2608/2614 and 'Site' 4664 (76.7, region-extra), sections 'East' 2307 (64.3) and 'West' 2356 (63.6, long lines missing).
 - view_sheet_var: 'RV1 plan' 303690 and 'RV 3D' 303702 render as an EMPTY SVG in our output (view-not-rendered) while Revit exports content.
 - All three sheets (303713, 303711): title block texts 'www.autodesk.com/revit' and the print date are missing from our sheet (PDF tier). The print date is variable, the URL text is a real gap.
+
+## Section 'East' 2307 (view_l_section_schedule_var) overlay reading (red = Revit only, cyan = ours only), crop ~2000 px wide
+- Level heads: Revit's head symbol (circle with quartered fill) sits further RIGHT than ours (ours is about 70 px / about 3.5 % of the view width to the left, overlapping the label), and the Revit label ('Level 2', 'T.O. Slab', ...) is set at larger text size and lower-right of ours, with the elevation value directly under it. Ours is smaller and offset up-left. Same for every level (Level 1/2, T.O. Fnd. Wall, T.O. Footing, B.O. Footing).
+- Level lines: dash phase differs (ours dashes are offset from Revit's), minor.
+- Our extra 'VR1' / '6096' level head at the top right is cyan-only where Revit has a different label position ('60..' in red).
+Overlay: ~/src/rvt-qa/out4/2026_view_l_section_schedule_var.rte/diff/2307_overlay.png
