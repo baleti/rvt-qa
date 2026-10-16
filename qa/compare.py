@@ -26,6 +26,7 @@ def crop_pair(ref, warped, box, path, pad=40):
     cv2.imwrite(path, pair); return True
 
 def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
+    if is_sheet: dxf = None    # sheet DXF holds viewports at model scale/offsets (extents of kilometres): not comparable to the sheet SVG; the PDF/image tiers apply
     os.makedirs(outdir, exist_ok=True); res = dict(id=vid, name=meta.get('name'), findings=[]); F = res['findings']
     if svg.endswith('.svg') and (lambda t: 'viewBox' not in t or re.search(r'viewBox="[-\d.]+ [-\d.]+ [\d.]+ 0\.0+"', t) is not None)(open(svg).read(4000)):
         F.append(dict(kind='view-not-rendered', score=10.0, what='our render is an empty SVG (view type unsupported?)')); res['summary'] = {}; res['pass'] = False; return res
@@ -109,7 +110,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
                         if r['recall'] < 0.6 and r['ink_px'] > 400: F.append(dict(kind='layer-missing', score=0.8 + (1 - r['recall']), what=r['layer'], recall=r['recall'], ink_px=r['ink_px']))
                 else: res['layers_note'] = 'dxf raster registration unreliable'
             except Exception as ex: res['layers_note'] = repr(ex)[:120]
-        lr, lo = D.long_lines(ref, 0.2), D.long_lines(w, 0.2)
+        lr, lo = ([], []) if is_sheet else (D.long_lines(ref, 0.2), D.long_lines(w, 0.2))    # whole-sheet long lines/bubbles are view-level, noise on sheets
         pairs, lmiss, lextra = D.match_lines(lo, lr, tol=10)
         res['lines'] = dict(revit=len(lr), ours=len(lo), matched=len(pairs), missing=len(lmiss), extra=len(lextra))
         for sg in lmiss: F.append(dict(kind='longline-missing', score=1.2, box_px=(min(sg[0], sg[2]), min(sg[1], sg[3]), max(sg[0], sg[2]), max(sg[1], sg[3])), seg_px=sg))
