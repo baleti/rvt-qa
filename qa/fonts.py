@@ -12,7 +12,7 @@ def canon(name):
     if re.fullmatch(r'[a-z]{4,}(bd|bi)', n) and not n.endswith('ubi'):      # windows font files: arialbd.ttf, arialbi.ttf
         b = True; i = i or n.endswith('bi'); n = n[:-2]
     n = re.sub(r'[-_ ]?(bolditalic|boldoblique|bold|italic|oblique|regular|roman|normal|black|heavy)', '', n); n = re.sub(r'(psmt|ps|mt)$', '', n); n = re.sub(r'[^a-z0-9]', '', n)
-    alias = {'arialmt': 'arial', 'arialnarrow': 'arialnarrow', 'timesnewroman': 'timesnewroman', 'times': 'timesnewroman', 'trebuchetms': 'trebuchet', 'liberationsans': 'arial', 'helvetica': 'arial', 'sansserif': 'arial'}
+    alias = {'arialmt': 'arial', 'arialnarrow': 'arialnarrow', 'timesnewroman': 'timesnewroman', 'times': 'timesnewroman', 'trebuchetms': 'trebuchet', 'liberationsans': 'arial', 'helvetica': 'arial', 'sansserif': 'arial', 'trebuc': 'trebuchet', 'trebucit': 'trebuchet', 'trebucbd': 'trebuchet', 'trebucbi': 'trebuchet'}
     return alias.get(n, n) or 'unknown', b, i
 
 @functools.lru_cache(maxsize=None)
@@ -81,7 +81,9 @@ def baseline(pairs, src, off=None):
     src 'dxf': r positions are in the paper frame before registration; off = (dx, dy) geometry registration (absolute) or None (then relative to the text registration, bias is lost).
     src 'pdf': both in the paper frame. Returns (summary dict, findings)."""
     rows = []
+    cnt = collections.Counter(re.sub(r'\s+', '', o['t']).lower() for r, o, d in pairs)      # strings that occur more than twice (tags) cannot be paired reliably: skip them
     for r, o, d in pairs:
+        if cnt[re.sub(r'\s+', '', o['t']).lower()] > 2: continue
         rot = o.get('rot', 0) or 0
         if rot % 360 not in (0.0,) and abs(rot % 360 - 360) > 1e-6 and (rot % 360) not in (90.0, 270.0): continue
         th = math.radians(rot); n = (math.sin(th), math.cos(th))                    # text 'down' direction in SVG coords (y down)

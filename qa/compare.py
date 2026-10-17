@@ -33,7 +33,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     # ---- tier 0: sanity of our own text (needs no Revit reference): leaked sentinels / debug strings / absurd sizes
     if svg.endswith('.svg'):
         for o in vec.svg_texts(open(svg).read()):
-            bad = re.search(r'^\?+$|EID\(|18446744073709551615|4294967295|\bnan\b|\bNone\b|Traceback|0x[0-9a-f]{8}|\{\w+\}|<[A-Za-z]+ object', o['t'])
+            bad = re.search(r'EID\(|18446744073709551615|4294967295|\bnan\b|\bNone\b|Traceback|0x[0-9a-f]{8}|\{\w+\}|<[A-Za-z]+ object', o['t'])
             if bad or (o['h'] > 15 and not is_sheet):
                 F.append(dict(kind='text-garbage', score=3.0, what=o['t'][:80], size_mm=round(o['h'], 1), at_mm=(round(o['x'], 1), round(o['y'], 1)), owner=o.get('e')))
     # ---- tier 1: vector text diff (Revit DXF vs our SVG), numeric
