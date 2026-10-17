@@ -20,7 +20,7 @@ def label(img, text, h=34):
 
 def fit_h(img, h): return cv2.resize(img, (max(1, int(img.shape[1] * h / img.shape[0])), h), interpolation=cv2.INTER_AREA)
 
-def build_pair(svg, png, out_base, title):
+def build_pair(svg, png, out_base, title, full_sheet=False):
     ref_c = cv2.imread(png, cv2.IMREAD_COLOR)
     if ref_c is None: return None
     H, W = ref_c.shape[:2]; long_ = max(H, W)
@@ -33,7 +33,13 @@ def build_pair(svg, png, out_base, title):
     sc0 = min(Ww / wo, Hw / ho); ax, ay = (Ww - wo * sc0) / 2, (Hw - ho * sc0) / 2
     canvas = np.full((Hw, Ww), 255, np.uint8)
     small = cv2.resize(o, (max(1, int(wo * sc0)), max(1, int(ho * sc0))), interpolation=cv2.INTER_AREA); canvas[int(ay):int(ay) + small.shape[0], int(ax):int(ax) + small.shape[1]] = small
-    _, (s, dx, dy, score, M) = D.register_search(canvas, ref_w)
+    if full_sheet and abs(Ww / Hw - wo / ho) / (wo / ho) < 0.015:
+        # a sheet export is the whole page: our page sits on it at scale ~1 (a free search lets an almost empty sheet lock onto a
+        # repeating feature at 1.75x and crops the title block out of the card, 2020_Commercial Cover Sheet 206143)
+        _, (s, dx, dy, score, M) = D.register_search(canvas, ref_w, scales=np.exp(np.linspace(-0.03, 0.03, 13)))
+        if abs(dx) > 0.03 * Ww or abs(dy) > 0.03 * Hw: s, dx, dy = 1.0, 0.0, 0.0
+    else:
+        _, (s, dx, dy, score, M) = D.register_search(canvas, ref_w)
     # output scale: native Revit size, upscaled x2/x3 when small, capped
     k = 1 if long_ >= 2400 else min(3, int(math.ceil(2400 / long_)))
     OW, OH = W * k, H * k
@@ -62,7 +68,29 @@ def build_pair(svg, png, out_base, title):
     hh_ = min(1500, OH); side = np.concatenate([label(fit_h(revit, hh_), 'REVIT  ' + title), np.full((hh_, 12, 3), 90, np.uint8)[:, :, :] if False else np.full((fit_h(revit, hh_).shape[0], 12, 3), 90, np.uint8), label(fit_h(ours, hh_), 'OURS  ' + title)], 1)
     cv2.imwrite(out_base + '__side.png', side, [cv2.IMWRITE_PNG_COMPRESSION, 9])
     th = fit_h(side, 300); cv2.imwrite(out_base + '__thumb.jpg', th, [cv2.IMWRITE_JPEG_QUALITY, 80])
-    return dict(reg_score=round(float(score), 3), scale=round(float(s * sc0 / g), 4), k=k, size=[OW, OH], approx=bool(score < 0.35))
+    vb = re.search(r'viewBox="([-\d. e]+)"', open(svg).read(4000)); vbv = [float(x) for x in vb.group(1).split()] if vb else [0, 0, 1, 1]
+    cm = dict(pxmm=wr / max(vbv[2], 1e-6), x0=x0, y0=y0, vbx=vbv[0], vby=vbv[1])
+    return dict(reg_score=round(float(score), 3), scale=round(float(s * sc0 / g), 4), k=k, size=[OW, OH], approx=bool(score < 0.35), cmap=cm)
+
+def font_crops(base, meta, findings, title, n=6, wmm=60.0, hmm=18.0):
+    """crop Revit | ours around the first n texts of font findings (positions in our svg mm) into base__font<i>.png"""
+    rv = cv2.imread(base + '__revit.png'); ou = cv2.imread(base + '__ours.png'); cm = meta['cmap']; out = []
+    seen = set()
+    for f in findings:
+        if not (f['kind'].startswith('font-') or f['kind'] == 'text-baseline') or f['kind'] == 'font-substituted': continue
+        for ex in f.get('examples', [])[:3]:
+            key = (f['kind'], ex['t']);
+            if key in seen or len(out) >= n: continue
+            seen.add(key); x, y = ex['at_mm']; px = cm['x0'] + (x - cm['vbx']) * cm['pxmm']; py = cm['y0'] + (y - cm['vby']) * cm['pxmm']
+            w, h = int(wmm * cm['pxmm']), int(hmm * cm['pxmm']); x0, y0 = int(px - w * 0.25), int(py - h * 0.65)
+            def crop(im):
+                H, W = im.shape[:2]; c = np.full((h, w, 3), 255, np.uint8); sx, sy = max(0, x0), max(0, y0); ex_, ey_ = min(W, x0 + w), min(H, y0 + h)
+                if ex_ > sx and ey_ > sy: c[sy - y0:ey_ - y0, sx - x0:ex_ - x0] = im[sy:ey_, sx:ex_]
+                return cv2.resize(c, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC) if w < 700 else c
+            a, b = crop(rv), crop(ou); a = label(a.copy(), 'REVIT  ' + f['what'][:60], 30); b = label(b.copy(), 'OURS  "%s"  [%s%s]' % (ex['t'], f['kind'], (' %+.2fmm' % ex['dn']) if 'dn' in ex else ''), 30)
+            img = np.concatenate([a, np.full((a.shape[0], 8, 3), 90, np.uint8), b], 1); fn = '%s__font%d.png' % (base, len(out)); cv2.imwrite(fn, img)
+            out.append(dict(img=os.path.basename(fn), text=ex['t'], kind=f['kind'], what=f['what']))
+    return out
 
 def pick(rows, vs, per_type):
     by = {}
@@ -91,9 +119,11 @@ def main():
             vid = r['id']; v = vs[vid]; svg = os.path.join(rd, 'ours', '%d.svg' % vid); png = os.path.join(gd, '%d.png' % vid)
             if not (os.path.exists(svg) and os.path.exists(png)): continue
             name = '%d_%s_%s' % (vid, safe(v['name']), t); base = os.path.join(sub, name)
-            try: m = build_pair(svg, png, base, '%s %s' % (v['name'], vid))
+            try: m = build_pair(svg, png, base, '%s %s' % (v['name'], vid), full_sheet=(t == 'sheet'))
             except Exception as ex: print('fail', vid, repr(ex)[:150]); continue
             if not m: continue
+            try: m['fontcrops'] = font_crops(base, m, r.get('findings', []), v['name'])
+            except Exception as ex: print('fontcrop fail', vid, repr(ex)[:100])
             m.update(file=sp['label'], id=vid, name=v['name'], type=t, vtype=v['vtype'], score=r.get('score'), qa_pass=r.get('pass'), path=sp['label'] + '/' + name)
             json.dump(m, open(base + '.json', 'w')); allm.append(m); print('ok', m['path'], m['reg_score'], flush=True)
     json.dump(allm, open(os.path.join(outdir, 'manifest_%s.json' % os.path.basename(sys.argv[1]).replace('.json', '')), 'w'), indent=1)

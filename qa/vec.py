@@ -7,6 +7,10 @@ def dxf_texts(fn):
     doc = ezdxf.readfile(fn); u = doc.header.get('$INSUNITS', 0)
     k = {1: 1/12, 2: 1.0, 4: 1/304.8, 5: 1/30.48, 6: 1/0.3048}.get(u, 1.0)   # to feet
     out = []
+    styfont = {}
+    try:
+        for stl in doc.styles: styfont[stl.dxf.name.lower()] = (stl.dxf.get('font', '') or '')
+    except Exception: pass
     def clean(s): return re.sub(r'\\[A-Za-z][^;]*;|[{}]', '', s).replace('\\P', ' ').replace('%%d', '°').replace('%%p', '±').strip()
     def walk(ents):
         for e in ents:
@@ -20,7 +24,8 @@ def dxf_texts(fn):
                     else: s = e.plain_text() if hasattr(e, 'plain_text') else e.text; p = e.dxf.insert; h = e.dxf.char_height; rot = e.dxf.get('rotation', 0)
                     if t == 'MTEXT' and not rot and e.dxf.hasattr('text_direction'): td = e.dxf.text_direction; rot = math.degrees(math.atan2(td.y, td.x))   # MTEXT rotation is a direction vector
                     s = clean(s)
-                    if s: out.append(dict(t=s, x=p.x*k, y=p.y*k, h=h*k, rot=float(rot) % 360, layer=e.dxf.layer))
+                    st = e.dxf.get('style', 'Standard'); ft = styfont.get(st.lower(), ''); wf = e.dxf.get('width', 1.0) if t == 'TEXT' else 1.0
+                    if s: out.append(dict(t=s, x=p.x*k, y=p.y*k, h=h*k, rot=float(rot) % 360, layer=e.dxf.layer, style=st, font=ft, wfactor=wf, et=t))
                 except Exception: pass
     walk(doc.modelspace())
     return out, k
@@ -35,16 +40,18 @@ def svg_texts(svg):
         sm = re.search(r'font-size="([-\d.e]+)"', a); em = re.search(r'data-e="(\d+)"', a); an = re.search(r'text-anchor="(\w+)"', a)
         if not tm: continue
         h = float(sm.group(1)) if sm else 0; rr = float(rm.group(1)) if rm else 0
+        fm = re.search(r'font-family="([^"]*)"', a); fw = re.search(r'font-weight="(\w+)"', a); fs = re.search(r'font-style="(\w+)"', a)
+        fx = dict(font=html.unescape(fm.group(1)) if fm else '', bold=bool(fw and fw.group(1) in ('bold', '700')), italic=bool(fs and fs.group(1) in ('italic', 'oblique')))
         tsp = re.findall(r'<tspan([^>]*)>(.*?)</tspan>', body, re.S)
         if len(tsp) > 1 and all('dy="' in ta for ta, _ in tsp):     # wrapped text: Revit exports one MTEXT per line, so match per line
             cy = 0.0; c, sn = math.cos(math.radians(rr)), math.sin(math.radians(rr))
             for ta, tb in tsp:
                 cy += float(re.search(r'dy="([-\d.e]+)"', ta).group(1)); st = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", tb)).split())
-                if st: out.append(dict(t=st, x=float(tm.group(1)) - cy * sn, y=float(tm.group(2)) + cy * c, h=h, rot=(-rr) % 360, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start'))
+                if st: out.append(dict(t=st, x=float(tm.group(1)) - cy * sn, y=float(tm.group(2)) + cy * c, h=h, rot=(-rr) % 360, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start', **fx))
             continue
         s = html.unescape(re.sub(r"<[^>]+>", " ", body)); s = " ".join(s.split())
         if not s: continue
-        out.append(dict(t=s, x=float(tm.group(1)), y=float(tm.group(2)), h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start'))
+        out.append(dict(t=s, x=float(tm.group(1)), y=float(tm.group(2)), h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start', **fx))
     return out
 
 def norm(s): return re.sub(r'\s+', '', s).lower()
