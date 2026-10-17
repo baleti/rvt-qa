@@ -20,7 +20,7 @@ def crop_pair(ref, warped, box, path, pad=40):
     x0, y0, x1, y1 = max(0, x0-pad), max(0, y0-pad), min(W, x1+pad), min(H, y1+pad)
     if x1 - x0 < 8 or y1 - y0 < 8: return False
     a = cv2.cvtColor(ref[y0:y1, x0:x1], cv2.COLOR_GRAY2BGR); b = cv2.cvtColor(warped[y0:y1, x0:x1], cv2.COLOR_GRAY2BGR)
-    ov = np.dstack([warped[y0:y1, x0:x1], warped[y0:y1, x0:x1], ref[y0:y1, x0:x1]])   # red = Revit only, cyan = ours only
+    ov = np.dstack([warped[y0:y1, x0:x1], warped[y0:y1, x0:x1], ref[y0:y1, x0:x1]])   # CYAN = Revit only (ours white there), RED = ours only (verified on rst 1214432: Revit grid columns sit on the cyan lines)
     pair = np.hstack([a, b, ov]); sc = min(1.0, 1800 / pair.shape[1]); 
     if sc < 1: pair = cv2.resize(pair, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA)
     cv2.imwrite(path, pair); return True
@@ -30,6 +30,12 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     os.makedirs(outdir, exist_ok=True); res = dict(id=vid, name=meta.get('name'), findings=[]); F = res['findings']
     if svg.endswith('.svg') and (lambda t: 'viewBox' not in t or re.search(r'viewBox="[-\d.]+ [-\d.]+ [\d.]+ 0\.0+"', t) is not None)(open(svg).read(4000)):
         F.append(dict(kind='view-not-rendered', score=10.0, what='our render is an empty SVG (view type unsupported?)')); res['summary'] = {}; res['pass'] = False; return res
+    # ---- tier 0: sanity of our own text (needs no Revit reference): leaked sentinels / debug strings / absurd sizes
+    if svg.endswith('.svg'):
+        for o in vec.svg_texts(open(svg).read()):
+            bad = re.search(r'EID\(|18446744073709551615|4294967295|\bnan\b|\bNone\b|Traceback|0x[0-9a-f]{8}|\{\w+\}|<[A-Za-z]+ object', o['t'])
+            if bad or (o['h'] > 15 and not is_sheet):
+                F.append(dict(kind='text-garbage', score=3.0, what=o['t'][:80], size_mm=round(o['h'], 1), at_mm=(round(o['x'], 1), round(o['y'], 1)), owner=o.get('e')))
     # ---- tier 1: vector text diff (Revit DXF vs our SVG), numeric
     tx_map = None
     if dxf and os.path.exists(dxf) and meta.get('scale'):
@@ -161,4 +167,6 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
     if res.get('ref_ink_px', 1e9) < 400: res['findings'].insert(0, dict(kind='trivial-view', score=0.1, note='Revit export has almost no ink; pass/fail is vacuous'))
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
+    if not res['reliable'] and g:     # image registration unreliable: judge by DXF geometry (mm, no registration needed) and text
+        res['pass'] = bool(g['recall'] >= 0.85 and g['precision'] >= 0.85 and (tr is None or tr >= 0.9))
     return res

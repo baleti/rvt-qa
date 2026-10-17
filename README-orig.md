@@ -10,7 +10,7 @@ Goal: find simple view/sheet defects BEFORE spending Claude tokens. Local only, 
 Did not help / skipped: OCR (tesseract/EasyOCR/docTR recall 0.4 on our own render, vector text is the reference), PaddleOCR (no wheel for Python 3.14), sheet DXFs (viewports at model scale, not comparable; use PDFs), whole-sheet line/bubble detection (noise). Embedding/VLM tiers are only for flagged tiles on host1 (see survey).
 
 ## Tools
-- `qa-view FILE.rvt VIEWID [--gt DIR] [--svg OURS.svg]` : renders our view (rvt-sheets venv, capped 3 GB), compares with Revit's PNG + DXF export (default dir ~/rvt-research/gt_views/<match on FILE line of index.tsv>), prints PASS/FAIL, summary, ranked findings; crops (Revit | ours | overlay red=Revit only, cyan=ours only) in out/<file>/diff/.
+- `qa-view FILE.rvt VIEWID [--gt DIR] [--svg OURS.svg]` : renders our view (rvt-sheets venv, capped 3 GB), compares with Revit's PNG + DXF export (default dir ~/rvt-research/gt_views/<match on FILE line of index.tsv>), prints PASS/FAIL, summary, ranked findings; crops (Revit | ours | overlay CYAN=Revit only, RED=ours only) in out/<file>/diff/.
 - `qa-dash FILE.rvt... [--sheets] [--max N]` : all exported views of a file -> out/<file>/results.jsonl + dashboard.html. Heavy: run on host1 (`./h1dash.sh`).
 
 ## Method (cheap numeric first)
@@ -53,16 +53,21 @@ EasyOCR and docTR exceeded the 3 GB host3 cap (OOM-killed, 3 attempts): MEMORY R
 ## Vector geometry tier (qa/vecgeom.py, host3-light: 0.6 GB RSS, ~20 s per view)
 Revit DXF primitives (per layer) vs our SVG paths (per element id) in paper mm, both sampled every 0.25 mm; scale known (304.8/view scale), translation by FFT + median ICP. Reports recall per Revit layer, extra-ink ranking per OUR element id (precision offenders, ids can be looked up in the reader), chamfer and Hausdorff-95 in mm, overall P/R at 0.6 mm. Residential view 32: recall 0.94, precision 0.73, chamfer 1.87 mm, Hausdorff95 26 mm; weakest layers A-AREA-IDEN 0.21, S-STRS-ANNO 0.26, A-DETL-MBND 0.58; elements 234610 / 234684 / 234150 / 206435 draw 450-640 mm of ink Revit does not have. Each qa-view run also writes out/<file>/defects_<view>.md (ranked table, area, crops).
 
-## Corpus status (dev tree, host1 run, all tiers)
-| file | views | pass | median combined score |
-|---|---|---|---|
-| rst basic | 47 | 7 | 73.2 |
-| Commercial | 28 | 2 | 66.1 |
-| Residential | 29 | 4 | 70.6 |
+## Corpus status (dev cb53624, qaall5, host1, all tiers)
+| file | views | median combined score |
+|---|---|---|
+| rst basic | 45 | 81.6 |
+| Commercial | 28 | 78.7 |
+| Residential | 29 | 78.4 |
+
+Snowdon Towers (2024 and 2026 agree within 0.5): Structural 52 views median 69.0, Facades 10 views median 66.
+
+Lesson: vecgeom must honour the SVG clipPath (crop region); ignoring it made detail views look 10-18x over-drawn and cost up to 40 score points. Always cross-check a QA number against an independent tool (c5-sheets compare_dxf) before reporting it.
 
 Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out3` breaks findings down by category. Dimension strings are not in Revit's DXF, so ours-only ones are informational.
 
 ## Refreshing everything after a rvt-sheets release
 1. `rsync -a --exclude '.venv*' --exclude __pycache__ ~/src/rvt-sheets-dev/ host1:src/rvt-sheets-dev/`
 2. `./h1queue.sh qaall ./h1all.sh` (queues on host1, waits for 11 GB free)
-3. pull: `rsync -a --exclude ours host1:src/rvt-qa/out3/ out3/` (same for out4), then `./qa-textcat out3`, `./qa-index out3`, `./qa-regress --dev` for the golden set.
+3. compare with the previous run: `./qa-scorediff out_old out_new` (drops, gains, pass flips, DXF P/R).
+4. pull: `rsync -a --exclude ours host1:src/rvt-qa/out3/ out3/` (same for out4), then `./qa-textcat out3`, `./qa-index out3`, `./qa-regress --dev` for the golden set.
