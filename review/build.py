@@ -71,7 +71,7 @@ def font_crops(base, meta, findings, title, n=6, wmm=60.0, hmm=18.0):
     rv = cv2.imread(base + '__revit.png'); ou = cv2.imread(base + '__ours.png'); cm = meta['cmap']; out = []
     seen = set()
     for f in findings:
-        if not f['kind'].startswith('font-') or f['kind'] == 'font-substituted': continue
+        if not (f['kind'].startswith('font-') or f['kind'] == 'text-baseline') or f['kind'] == 'font-substituted': continue
         for ex in f.get('examples', [])[:3]:
             key = (f['kind'], ex['t']);
             if key in seen or len(out) >= n: continue
@@ -81,7 +81,7 @@ def font_crops(base, meta, findings, title, n=6, wmm=60.0, hmm=18.0):
                 H, W = im.shape[:2]; c = np.full((h, w, 3), 255, np.uint8); sx, sy = max(0, x0), max(0, y0); ex_, ey_ = min(W, x0 + w), min(H, y0 + h)
                 if ex_ > sx and ey_ > sy: c[sy - y0:ey_ - y0, sx - x0:ex_ - x0] = im[sy:ey_, sx:ex_]
                 return cv2.resize(c, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC) if w < 700 else c
-            a, b = crop(rv), crop(ou); a = label(a.copy(), 'REVIT  ' + f['what'][:60], 30); b = label(b.copy(), 'OURS  "%s"  [%s]' % (ex['t'], f['kind']), 30)
+            a, b = crop(rv), crop(ou); a = label(a.copy(), 'REVIT  ' + f['what'][:60], 30); b = label(b.copy(), 'OURS  "%s"  [%s%s]' % (ex['t'], f['kind'], (' %+.2fmm' % ex['dn']) if 'dn' in ex else ''), 30)
             img = np.concatenate([a, np.full((a.shape[0], 8, 3), 90, np.uint8), b], 1); fn = '%s__font%d.png' % (base, len(out)); cv2.imwrite(fn, img)
             out.append(dict(img=os.path.basename(fn), text=ex['t'], kind=f['kind'], what=f['what']))
     return out

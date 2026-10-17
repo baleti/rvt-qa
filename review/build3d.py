@@ -38,6 +38,14 @@ for fdir in sorted(glob.glob(os.path.join(root, 'revit', '*'))):
         ours = cv2.warpAffine(O, np.float32([[s, 0, tx], [0, s, ty]]), (W, H), flags=cv2.INTER_AREA, borderValue=(255, 255, 255))
         t = {'ThreeD': '3d', 'FloorPlan': 'plan', 'CeilingPlan': 'plan', 'EngineeringPlan': 'plan', 'AreaPlan': 'plan', 'Elevation': 'elevation', 'Section': 'section', 'Detail': 'detail', 'DrawingSheet': 'sheet'}.get(types.get(vid), '3d'); nm = names.get(vid, vid) + vtag
         sub = os.path.join(root, '3d_' + f); os.makedirs(sub, exist_ok=True); base = os.path.join(sub, '%s_%s_%s' % (vid, re.sub(r'[^A-Za-z0-9._-]+', '_', nm)[:40], t))
+        # refine the bbox alignment on ink maps (multi-scale + shift, small range), then score ink precision/recall
+        gw = min(1.0, 1600.0 / max(W, H)); Rg = cv2.cvtColor(cv2.resize(R, None, fx=gw, fy=gw, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
+        Og = cv2.cvtColor(cv2.resize(ours, (Rg.shape[1], Rg.shape[0]), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
+        sc_ = np.exp(np.linspace(-0.08, 0.08, 17)); _, (rs, rdx, rdy, rscore, _M) = D.register_search(Og, Rg, scales=sc_)
+        Wk, Hk = Rg.shape[1], Rg.shape[0]; c = W / float(Wk)
+        ours = cv2.warpAffine(ours, np.float32([[rs, 0, ((1 - rs) * Wk / 2 + rdx) * c], [0, rs, ((1 - rs) * Hk / 2 + rdy) * c]]), (W, H), flags=cv2.INTER_AREA, borderValue=(255, 255, 255))
+        Ow = cv2.cvtColor(cv2.resize(ours, (Wk, Hk), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
+        p6, r6 = D.ink_pr(Ow, Rg, 6); p3, r3 = D.ink_pr(Ow, Rg, 3); f6 = 2 * p6 * r6 / max(p6 + r6, 1e-6); score3 = round(100 * f6, 1)
         gd = min(1.0, 2400.0 / max(W, H)); ga = cv2.cvtColor(cv2.resize(ours, None, fx=gd, fy=gd, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY); gb = cv2.cvtColor(cv2.resize(R, (ga.shape[1], ga.shape[0]), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
         A, B = D.ink(ga, 215), D.ink(gb, 215); tt = max(2, int(round(max(ga.shape) / 400.0))); kern = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * tt + 1, 2 * tt + 1))
         diff = np.full(ga.shape + (3,), 255, np.uint8); diff[(A | B).astype(bool) & ((A & cv2.dilate(B, kern)) | (B & cv2.dilate(A, kern))).astype(bool)] = (170, 170, 170)
@@ -45,6 +53,9 @@ for fdir in sorted(glob.glob(os.path.join(root, 'revit', '*'))):
         for suf, im in (('revit', R), ('ours', ours), ('diff', diff)): cv2.imwrite('%s__%s.png' % (base, suf), im, [cv2.IMWRITE_PNG_COMPRESSION, 9])
         hh = min(1500, H); a = fit_h(R, hh); side = np.concatenate([label(a, 'REVIT  %s %s' % (nm, vid)), np.full((a.shape[0], 12, 3), 90, np.uint8), label(fit_h(ours, hh), 'OURS (rvt-viewer)  %s' % nm)], 1)
         cv2.imwrite(base + '__side.png', side, [cv2.IMWRITE_PNG_COMPRESSION, 9]); cv2.imwrite(base + '__thumb.jpg', fit_h(side, 300), [cv2.IMWRITE_JPEG_QUALITY, 80])
-        m = dict(file=f, id=vid, name=nm, type=t, path='3d_%s/%s' % (f, os.path.basename(base)), reg_score=0.0, approx=True, score=None, size=[W, H], camera=cams.get(vid, ''), source='rvt-viewer screenshot')
+        m = dict(file=f, id=vid, name=nm, type=t, path='3d_%s/%s' % (f, os.path.basename(base)), reg_score=round(float(rscore), 3), approx=bool(rscore < 0.35), score=score3, ink=dict(P3=round(float(p3), 3), R3=round(float(r3), 3), P6=round(float(p6), 3), R6=round(float(r6), 3)), style=('hidden-line' if vtag else 'shaded'), size=[W, H], camera=cams.get(vid, ''), source='rvt-viewer screenshot')
         json.dump(m, open(base + '.json', 'w')); out.append(m); print('ok', m['path'])
 json.dump(out, open(os.path.join(root, 'pairs3d.json'), 'w'), indent=1); print(len(out), 'pairs')
+with open(os.path.join(root, 'scores3d.tsv'), 'w') as fh:
+    fh.write('file\tview\tname\tstyle\tscore\tP6\tR6\n')
+    for m in sorted(out, key=lambda m: (m['style'], m['score'])): fh.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (m['file'], m['id'], m['name'], m['style'], m['score'], m['ink']['P6'], m['ink']['R6']))

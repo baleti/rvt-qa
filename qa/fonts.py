@@ -74,3 +74,35 @@ def missing_fonts(revit_fonts):
         fam, b, i = canon(f); _, got = resolve(f.split('-')[0].replace('MT', ''), b, i)
         if got and fam[:5] not in re.sub(r'[^a-z0-9]', '', got.lower()): out.append((f, got))
     return out
+
+
+def baseline(pairs, src, off=None):
+    """vertical (text-normal) offset of our text origin vs Revit's, mm, positive = ours lower on the paper.
+    src 'dxf': r positions are in the paper frame before registration; off = (dx, dy) geometry registration (absolute) or None (then relative to the text registration, bias is lost).
+    src 'pdf': both in the paper frame. Returns (summary dict, findings)."""
+    rows = []
+    for r, o, d in pairs:
+        rot = o.get('rot', 0) or 0
+        if rot % 360 not in (0.0,) and abs(rot % 360 - 360) > 1e-6 and (rot % 360) not in (90.0, 270.0): continue
+        th = math.radians(rot); n = (math.sin(th), math.cos(th))                    # text 'down' direction in SVG coords (y down)
+        if src == 'dxf':
+            if off is None: continue
+            dx, dy = o['y'] * 0 + o['x'] - (r['x'] + off[0]), o['y'] - (r['y'] + off[1])
+            # DXF TEXT insert is the baseline-left, MTEXT insert is top-left: report the two separately
+            key = '%s %s' % (r.get('et', 'TEXT'), canon(r.get('font'))[0])
+        else:
+            dx, dy = 0.0, o['y'] - r['y']; n = (0.0, 1.0)
+            key = '%s %.1fmm' % (canon(r.get('font'))[0], round(r.get('h', 0) * 2) / 2)
+        rows.append((key, dx * n[0] + dy * n[1], o, r))
+    if len(rows) < 3: return None, []
+    v = np.array([x[1] for x in rows]); sm = dict(n=len(v), mean=round(float(v.mean()), 3), median=round(float(np.median(v)), 3), max_abs=round(float(np.abs(v).max()), 3), p90_abs=round(float(np.percentile(np.abs(v), 90)), 3), by_type={})
+    g = collections.defaultdict(list)
+    for k, dn, o, r in rows: g[k].append((dn, o, r))
+    F = []
+    for k, L in sorted(g.items(), key=lambda kv: -len(kv[1])):
+        a = np.array([x[0] for x in L]); med = float(np.median(a)); sm['by_type'][k] = dict(n=len(a), median=round(med, 3), mean=round(float(a.mean()), 3), max_abs=round(float(np.abs(a).max()), 3))
+        if len(a) >= 3 and abs(med) > 0.25:
+            Ls = sorted(L, key=lambda x: -x[1]['h'])[:6]
+            ex = [dict(t=o['t'][:24], at_mm=(round(o['x'], 1), round(o['y'], 1)), e=o.get('e'), dn=round(dn, 2)) for dn, o, r in Ls]
+            F.append(dict(kind='text-baseline', score=0.6 + min(abs(med), 3.0) / 3.0, what='%s: median baseline offset %+.2f mm (ours %s), n=%d' % (k, med, 'lower' if med > 0 else 'higher', len(a)), n=len(a), median_mm=round(med, 3), examples=ex, at_mm=ex[0]['at_mm']))
+    return sm, F

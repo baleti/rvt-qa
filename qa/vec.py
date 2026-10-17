@@ -25,7 +25,7 @@ def dxf_texts(fn):
                     if t == 'MTEXT' and not rot and e.dxf.hasattr('text_direction'): td = e.dxf.text_direction; rot = math.degrees(math.atan2(td.y, td.x))   # MTEXT rotation is a direction vector
                     s = clean(s)
                     st = e.dxf.get('style', 'Standard'); ft = styfont.get(st.lower(), ''); wf = e.dxf.get('width', 1.0) if t == 'TEXT' else 1.0
-                    if s: out.append(dict(t=s, x=p.x*k, y=p.y*k, h=h*k, rot=float(rot) % 360, layer=e.dxf.layer, style=st, font=ft, wfactor=wf))
+                    if s: out.append(dict(t=s, x=p.x*k, y=p.y*k, h=h*k, rot=float(rot) % 360, layer=e.dxf.layer, style=st, font=ft, wfactor=wf, et=t))
                 except Exception: pass
     walk(doc.modelspace())
     return out, k
