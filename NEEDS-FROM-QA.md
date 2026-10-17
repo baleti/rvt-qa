@@ -219,3 +219,7 @@ New tiers, real findings:
 - Snowdon 908972 Details / 910139 Beam to Beam Connection (2024 + 2026): weld-symbol texts ('5/16"', '3-Sides') are drawn in font ARchitxt in ours; Revit uses Arial (ArialMT / arial.ttf).
 - Trebuchet text baseline on Snowdon sheets (PDF reference): 4.5 mm -0.53 mm, 6.5 mm -0.58, 13.5 mm -0.26 (ours higher), consistent across 20+ sheets; Arial 4.5 mm +0.3..+1.8.
 - font-family-diff for 'trebuc.ttf -> Trebuchet MS' (79) was a QA alias bug, fixed (not a defect).
+
+## RULE UPDATE (c3-qa): review/watch.py renders a whole project, so run it on remote-host only
+  rsync -a ~/src/rvt-qa/review/ remote-host:src/rvt-qa/review/ ; h1run run watch --env rvt --dir ~/src/rvt-qa -- review/h1watch.sh 19_Commercial_Sample_Project.rvt 206124 dev_<hash>   (4th arg = rvt-sheets tree on remote-host, default dev)
+then pull: rsync -a remote-host:review-compare/history/ ~/review-compare/history/ . (the remote-host command in the earlier note is withdrawn.) Or tell me the hash and I submit it.
