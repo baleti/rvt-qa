@@ -13,7 +13,7 @@ if os.path.exists(extra): recs += [m for m in json.load(open(extra)) if m['path'
 ORDER = ['sheet', 'plan', 'section', 'elevation', 'detail', 'schedule', '3d', 'other']
 TITLE = dict(sheet='Sheets', plan='Plans', section='Sections', elevation='Elevations', detail='Details / drafting', schedule='Schedules / legends', other='Other')
 TITLE['3d'] = '3D views'
-recs.sort(key=lambda m: (ORDER.index(m['type']) if m['type'] in ORDER else 99, m['file'], m['id']))
+recs.sort(key=lambda m: (ORDER.index(m['type']) if m['type'] in ORDER else 99, m['file'], int(m['id'])))
 data = json.dumps(recs)
 cards = []
 for i, m in enumerate(recs):
