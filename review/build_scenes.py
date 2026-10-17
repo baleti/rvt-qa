@@ -29,7 +29,7 @@ for dn in sys.argv[2:]:
         vid = int(l[1]); svg = os.path.join(cache, '%d.svg' % vid); png = os.path.join(rd, '%d.png' % vid)
         if not os.path.exists(svg): print('no svg', dn, vid); continue
         t = TYPES.get(l[3], TYPES.get(l[2], 'other')); name = '%d_%s_%s' % (vid, safe(l[4]), t); base = os.path.join(sub, name)
-        try: m = build_pair(svg, png, base, '%s %s' % (l[4], vid))
+        try: m = build_pair(svg, png, base, '%s %s' % (l[4], vid), full_sheet=(t == 'sheet'))
         except Exception as ex: print('fail', dn, vid, repr(ex)[:120]); continue
         if not m: continue
         m.update(file=dn, id=vid, name=l[4], type=t, vtype=l[3], score=None, qa_pass=None, path=dn + '/' + name)

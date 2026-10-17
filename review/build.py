@@ -20,7 +20,7 @@ def label(img, text, h=34):
 
 def fit_h(img, h): return cv2.resize(img, (max(1, int(img.shape[1] * h / img.shape[0])), h), interpolation=cv2.INTER_AREA)
 
-def build_pair(svg, png, out_base, title):
+def build_pair(svg, png, out_base, title, full_sheet=False):
     ref_c = cv2.imread(png, cv2.IMREAD_COLOR)
     if ref_c is None: return None
     H, W = ref_c.shape[:2]; long_ = max(H, W)
@@ -33,7 +33,13 @@ def build_pair(svg, png, out_base, title):
     sc0 = min(Ww / wo, Hw / ho); ax, ay = (Ww - wo * sc0) / 2, (Hw - ho * sc0) / 2
     canvas = np.full((Hw, Ww), 255, np.uint8)
     small = cv2.resize(o, (max(1, int(wo * sc0)), max(1, int(ho * sc0))), interpolation=cv2.INTER_AREA); canvas[int(ay):int(ay) + small.shape[0], int(ax):int(ax) + small.shape[1]] = small
-    _, (s, dx, dy, score, M) = D.register_search(canvas, ref_w)
+    if full_sheet and abs(Ww / Hw - wo / ho) / (wo / ho) < 0.015:
+        # a sheet export is the whole page: our page sits on it at scale ~1 (a free search lets an almost empty sheet lock onto a
+        # repeating feature at 1.75x and crops the title block out of the card, 2020_Commercial Cover Sheet 206143)
+        _, (s, dx, dy, score, M) = D.register_search(canvas, ref_w, scales=np.exp(np.linspace(-0.03, 0.03, 13)))
+        if abs(dx) > 0.03 * Ww or abs(dy) > 0.03 * Hw: s, dx, dy = 1.0, 0.0, 0.0
+    else:
+        _, (s, dx, dy, score, M) = D.register_search(canvas, ref_w)
     # output scale: native Revit size, upscaled x2/x3 when small, capped
     k = 1 if long_ >= 2400 else min(3, int(math.ceil(2400 / long_)))
     OW, OH = W * k, H * k
@@ -113,7 +119,7 @@ def main():
             vid = r['id']; v = vs[vid]; svg = os.path.join(rd, 'ours', '%d.svg' % vid); png = os.path.join(gd, '%d.png' % vid)
             if not (os.path.exists(svg) and os.path.exists(png)): continue
             name = '%d_%s_%s' % (vid, safe(v['name']), t); base = os.path.join(sub, name)
-            try: m = build_pair(svg, png, base, '%s %s' % (v['name'], vid))
+            try: m = build_pair(svg, png, base, '%s %s' % (v['name'], vid), full_sheet=(t == 'sheet'))
             except Exception as ex: print('fail', vid, repr(ex)[:150]); continue
             if not m: continue
             try: m['fontcrops'] = font_crops(base, m, r.get('findings', []), v['name'])
