@@ -21,3 +21,4 @@
 - pass flag now uses DXF P/R>=0.85 (and text>=0.9) when image registration is unreliable; on qaall5 data this flips 3 of 16 such views (1382670 Continuous Footing, 1383032 Roof Peak, 1382272 Pile cap). Takes effect at the next sweep.
 - qa-regress --dev on cb53624: no regressions vs old baseline; baseline re-saved (32/36/29154/29181/156499).
 - snow2 (dev 43af8b6): Snowdon numbers unchanged (69.0/66.2/69.0/66.5); EID(...) text still in 10 SVGs (5 details x 2 files): fix not yet in dev.
+- qaall8 (dev 7076006/88ff41b): corpus medians 81.6/78.7/78.4; rst 8157 North back to 74.0 (the qaall6 drop is gone), Roof Peak 90.9 (the 95.2 was qaall6 only). NOTE: snow/snow2 Snowdon numbers were STALE (qa-dash reused cached SVGs in out6/*/ours); h1snow.sh now deletes them first; snow3 queued.
