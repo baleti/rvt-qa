@@ -43,7 +43,7 @@ function show(){const m=D[cur];document.getElementById('ttl').textContent=m.file
 document.getElementById('info').textContent=(m.score==null?'':'QA '+m.score+'  ')+'reg '+m.reg_score+(m.approx?'  FRAMING APPROX':'')+'  '+m.size[0]+'x'+m.size[1]+(m.camera?'  camera '+m.camera:'');
 document.querySelectorAll('#bar button[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m==mode));st.innerHTML='';
 if(mode=='swipe'){const w=document.createElement('div');w.id='sw';const a=img('revit'),b=img('ours','top');w.append(a,b);st.append(w);const f=()=>{b.style.clipPath='inset(0 0 0 '+rng.value+'%%)'};rng.oninput=f;f()}
-else if(mode=='fonts'){const fc=m.fontcrops||[];if(!fc.length){st.textContent='No font differences recorded for this pair (run a QA sweep with the font check, then rebuild).';st.style.color='#eee'}else fc.forEach(c=>{const x=new Image();x.src=m.path.split('/').slice(0,-1).join('/')+'/'+c.img;x.style.maxWidth='100%';x.style.display='block';x.style.margin='6px 0';st.append(x)})}
+else if(mode=='fonts'){const fc=m.fontcrops||[];if(!fc.length){st.textContent='No font differences recorded for this pair (run a QA sweep with the font check, then rebuild).';st.style.color='#eee'}else fc.forEach(c=>{const x=new Image();x.src=m.path.split('/').slice(0,-1).join('/')+'/'+c.img;x.style.maxWidth='100%%';x.style.display='block';x.style.margin='6px 0';st.append(x)})}
 else st.append(img(mode))}
 function openPair(i){cur=i;document.getElementById('v').style.display='flex';show()}function closeV(){document.getElementById('v').style.display='none'}
 document.querySelectorAll('#bar button[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;show()});fit.onchange=show;
