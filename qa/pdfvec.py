@@ -12,7 +12,7 @@ def pdf_texts(fn):
                 t = s['text'].strip()
                 if not t: continue
                 x0, y0, x1, y1 = [v * PT for v in s['bbox']]
-                out.append(dict(t=t, x=x0, y=y1 - 0.212 * s['size'] * PT, cx=(x0 + x1) / 2, cy=(y0 + y1) / 2, h=s['size'] * PT, font=s['font'], w=x1 - x0, x1=x1))
+                out.append(dict(t=t, x=x0, y=(s['origin'][1] * PT if s.get('origin') else y1 - 0.212 * s['size'] * PT), cx=(x0 + x1) / 2, cy=(y0 + y1) / 2, h=s['size'] * PT, font=s['font'], w=x1 - x0, x1=x1))
     return out, (p.rect.width * PT, p.rect.height * PT)
 
 def pdf_weights(fn):
