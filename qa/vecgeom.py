@@ -7,8 +7,38 @@ from scipy.spatial import cKDTree
 
 HATCH = {'cut_fill', 'surface_fill', 'symbolic_fill', 'room_fill'}
 
+def _clip_seg(a, b, r):
+    """Liang-Barsky: segment a-b clipped to rect r=(x0,y0,x1,y1); None when fully outside"""
+    t0, t1 = 0.0, 1.0; d = b - a
+    for p, q in ((-d[0], a[0] - r[0]), (d[0], r[2] - a[0]), (-d[1], a[1] - r[1]), (d[1], r[3] - a[1])):
+        if p == 0:
+            if q < 0: return None
+        else:
+            t = q / p
+            if p < 0: t0 = max(t0, t)
+            else: t1 = min(t1, t)
+            if t0 > t1: return None
+    return a + d * t0, a + d * t1
+
+def _clip_poly(P, r):
+    """clip a polyline to rect r; returns a list of polylines"""
+    out, cur = [], []
+    for a, b in zip(P[:-1], P[1:]):
+        c = _clip_seg(a, b, r)
+        if c is None:
+            if len(cur) > 1: out.append(np.array(cur))
+            cur = []; continue
+        if cur and np.allclose(cur[-1], c[0]): cur.append(c[1])
+        else:
+            if len(cur) > 1: out.append(np.array(cur))
+            cur = [c[0], c[1]]
+    if len(cur) > 1: out.append(np.array(cur))
+    return out
+
 def svg_polys(svg):
     out = []
+    clips = {m.group(1): tuple(float(m.group(k)) for k in (2, 3, 4, 5)) for m in re.finditer(r'<clipPath id="([^"]+)"><rect x="([-\d.e]+)" y="([-\d.e]+)" width="([-\d.e]+)" height="([-\d.e]+)"', svg)}
+    clips = {k: (x, y, x + w, y + h) for k, (x, y, w, h) in clips.items()}      # the SVG clip (crop region) hides ink that Revit's DXF does not contain
     for m in re.finditer(r'<path\b([^>]*)>', svg):
         a = m.group(1)
         if re.search(r'stroke="none"', a) and 'fill="none"' not in a: continue      # filled shapes (hatch/solid) are not linework
@@ -17,7 +47,10 @@ def svg_polys(svg):
         e = re.search(r'data-e="(\d+)"', a); sw = re.search(r'stroke-width="([\d.]+)"', a)
         for sub in re.split(r'(?=M)', d.group(1)):
             v = [float(x) for x in re.findall(r'-?\d+\.?\d*(?:e-?\d+)?', sub)]
-            if len(v) >= 4: out.append((e.group(1) if e else '?', float(sw.group(1)) if sw else 0.0, np.array(list(zip(v[0::2], v[1::2])))))
+            if len(v) < 4: continue
+            P = np.array(list(zip(v[0::2], v[1::2]))); cm = re.search(r'clip-path="url\(#([^)]+)\)"', a)
+            for Q in (_clip_poly(P, clips[cm.group(1)]) if cm and cm.group(1) in clips else [P]):
+                out.append((e.group(1) if e else '?', float(sw.group(1)) if sw else 0.0, Q))
     return out
 
 def dxf_polys(fn, scale):
