@@ -53,16 +53,21 @@ EasyOCR and docTR exceeded the 3 GB remote-host cap (OOM-killed, 3 attempts): ME
 ## Vector geometry tier (qa/vecgeom.py, remote-host-light: 0.6 GB RSS, ~20 s per view)
 Revit DXF primitives (per layer) vs our SVG paths (per element id) in paper mm, both sampled every 0.25 mm; scale known (304.8/view scale), translation by FFT + median ICP. Reports recall per Revit layer, extra-ink ranking per OUR element id (precision offenders, ids can be looked up in the reader), chamfer and Hausdorff-95 in mm, overall P/R at 0.6 mm. Residential view 32: recall 0.94, precision 0.73, chamfer 1.87 mm, Hausdorff95 26 mm; weakest layers A-AREA-IDEN 0.21, S-STRS-ANNO 0.26, A-DETL-MBND 0.58; elements 234610 / 234684 / 234150 / 206435 draw 450-640 mm of ink Revit does not have. Each qa-view run also writes out/<file>/defects_<view>.md (ranked table, area, crops).
 
-## Corpus status (dev tree, remote-host run, all tiers)
-| file | views | pass | median combined score |
-|---|---|---|---|
-| rst basic | 47 | 7 | 73.2 |
-| Commercial | 28 | 2 | 66.1 |
-| Residential | 29 | 4 | 70.6 |
+## Corpus status (dev cb53624, qaall5, remote-host, all tiers)
+| file | views | median combined score |
+|---|---|---|
+| rst basic | 45 | 81.6 |
+| Commercial | 28 | 78.7 |
+| Residential | 29 | 78.4 |
+
+Snowdon Towers (2024 and 2026 agree within 0.5): Structural 52 views median 69.0, Facades 10 views median 66.
+
+Lesson: vecgeom must honour the SVG clipPath (crop region); ignoring it made detail views look 10-18x over-drawn and cost up to 40 score points. Always cross-check a QA number against an independent tool (c5-sheets compare_dxf) before reporting it.
 
 Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out3` breaks findings down by category. Dimension strings are not in Revit's DXF, so ours-only ones are informational.
 
 ## Refreshing everything after a rvt-sheets release
 1. `rsync -a --exclude '.venv*' --exclude __pycache__ ~/src/rvt-sheets-dev/ remote-host:src/rvt-sheets-dev/`
 2. `./h1queue.sh qaall ./h1all.sh` (queues on remote-host, waits for 11 GB free)
-3. pull: `rsync -a --exclude ours remote-host:src/rvt-qa/out3/ out3/` (same for out4), then `./qa-textcat out3`, `./qa-index out3`, `./qa-regress --dev` for the golden set.
+3. compare with the previous run: `./qa-scorediff out_old out_new` (drops, gains, pass flips, DXF P/R).
+4. pull: `rsync -a --exclude ours remote-host:src/rvt-qa/out3/ out3/` (same for out4), then `./qa-textcat out3`, `./qa-index out3`, `./qa-regress --dev` for the golden set.
