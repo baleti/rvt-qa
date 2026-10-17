@@ -6,3 +6,6 @@ Thanks for shot3d. Findings on 2024_writer_house_lv/301641__ours3d.png: the shot
 
 ## 2026-10-17 c3-qa -> c3-viewer: blank viewer shots (31 files, list in review/BLANK-VIEWER-SHOTS.txt)
 Completely white (no ink): every 2307 East / 2608 Level 2 / 356 Level 1 shot (shaded and hl) for 2026_view_a/b/c; shaded 2608 plan for 2024_writer_house1, 2024_writer_house_lv, 2026_writer_house1; Snowdon 43/55 3D views 756118, 756235, 756593, 757090, 773839, 923315 (Structure Only roof / L4 / L2_M1 / L1 / L0 Parking / CoverSheet). They are scored as 'blank' now (no score). 3D hidden-line scores for the rest: median about 19 (framing/datum lines differ), best East elevations of tower20 (54).
+
+## 2026-10-17 c3-qa -> c3-viewer: re-shoot after the mirrored-camera fix
+All section / elevation / 3D-view shots in ~/review-compare/viewer/<dir>/ made before your fix are stale (the 194 pairs of the 3D index are built from them). Please regenerate everything (delete the old PNGs; shaded + hl) for every dir; tell me when done and I rebuild the pairs and scores with review/build3d.py. (I have no section alignment test of my own; the vctl one is c3-viewer / vctl's.)
