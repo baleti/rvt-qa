@@ -30,6 +30,12 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     os.makedirs(outdir, exist_ok=True); res = dict(id=vid, name=meta.get('name'), findings=[]); F = res['findings']
     if svg.endswith('.svg') and (lambda t: 'viewBox' not in t or re.search(r'viewBox="[-\d.]+ [-\d.]+ [\d.]+ 0\.0+"', t) is not None)(open(svg).read(4000)):
         F.append(dict(kind='view-not-rendered', score=10.0, what='our render is an empty SVG (view type unsupported?)')); res['summary'] = {}; res['pass'] = False; return res
+    # ---- tier 0: sanity of our own text (needs no Revit reference): leaked sentinels / debug strings / absurd sizes
+    if svg.endswith('.svg'):
+        for o in vec.svg_texts(open(svg).read()):
+            bad = re.search(r'EID\(|18446744073709551615|4294967295|\bnan\b|\bNone\b|Traceback|0x[0-9a-f]{8}|\{\w+\}|<[A-Za-z]+ object', o['t'])
+            if bad or (o['h'] > 15 and not is_sheet):
+                F.append(dict(kind='text-garbage', score=3.0, what=o['t'][:80], size_mm=round(o['h'], 1), at_mm=(round(o['x'], 1), round(o['y'], 1)), owner=o.get('e')))
     # ---- tier 1: vector text diff (Revit DXF vs our SVG), numeric
     tx_map = None
     if dxf and os.path.exists(dxf) and meta.get('scale'):
