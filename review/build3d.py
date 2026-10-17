@@ -32,7 +32,7 @@ for fdir in sorted(glob.glob(os.path.join(root, 'revit', '*'))):
       for vsuf, vtag in (('__ours3d.png', ''), ('__ours3d_hl.png', ' (hidden line)')):
         op = os.path.join(root, 'viewer', f, vid + vsuf)
         if not os.path.exists(op): continue
-        R = cv2.imread(rp, cv2.IMREAD_COLOR); O = cv2.imread(op, cv2.IMREAD_COLOR); H, W = R.shape[:2]
+        R = cv2.imread(rp, cv2.IMREAD_COLOR); O = cv2.imread(op, cv2.IMREAD_COLOR); H, W = R.shape[:2]; blank = bool((O.min(2) < 235).mean() < 0.0005)      # viewer shot without any content
         rb, ob = bbox(R), bbox(O); s = min((rb[2] - rb[0]) / max(ob[2] - ob[0], 1), (rb[3] - rb[1]) / max(ob[3] - ob[1], 1))
         tx = (rb[0] + rb[2]) / 2 - s * (ob[0] + ob[2]) / 2; ty = (rb[1] + rb[3]) / 2 - s * (ob[1] + ob[3]) / 2
         ours = cv2.warpAffine(O, np.float32([[s, 0, tx], [0, s, ty]]), (W, H), flags=cv2.INTER_AREA, borderValue=(255, 255, 255))
@@ -53,9 +53,9 @@ for fdir in sorted(glob.glob(os.path.join(root, 'revit', '*'))):
         for suf, im in (('revit', R), ('ours', ours), ('diff', diff)): cv2.imwrite('%s__%s.png' % (base, suf), im, [cv2.IMWRITE_PNG_COMPRESSION, 9])
         hh = min(1500, H); a = fit_h(R, hh); side = np.concatenate([label(a, 'REVIT  %s %s' % (nm, vid)), np.full((a.shape[0], 12, 3), 90, np.uint8), label(fit_h(ours, hh), 'OURS (rvt-viewer)  %s' % nm)], 1)
         cv2.imwrite(base + '__side.png', side, [cv2.IMWRITE_PNG_COMPRESSION, 9]); cv2.imwrite(base + '__thumb.jpg', fit_h(side, 300), [cv2.IMWRITE_JPEG_QUALITY, 80])
-        m = dict(file=f, id=vid, name=nm, type=t, path='3d_%s/%s' % (f, os.path.basename(base)), reg_score=round(float(rscore), 3), approx=bool(rscore < 0.35), score=score3, ink=dict(P3=round(float(p3), 3), R3=round(float(r3), 3), P6=round(float(p6), 3), R6=round(float(r6), 3)), style=('hidden-line' if vtag else 'shaded'), size=[W, H], camera=cams.get(vid, ''), source='rvt-viewer screenshot')
+        m = dict(file=f, id=vid, name=nm, type=t, path='3d_%s/%s' % (f, os.path.basename(base)), reg_score=round(float(rscore), 3), approx=bool(rscore < 0.35), score=(None if blank else score3), blank=blank, ink=dict(P3=round(float(p3), 3), R3=round(float(r3), 3), P6=round(float(p6), 3), R6=round(float(r6), 3)), style=('hidden-line' if vtag else 'shaded'), size=[W, H], camera=cams.get(vid, ''), source='rvt-viewer screenshot')
         json.dump(m, open(base + '.json', 'w')); out.append(m); print('ok', m['path'])
 json.dump(out, open(os.path.join(root, 'pairs3d.json'), 'w'), indent=1); print(len(out), 'pairs')
 with open(os.path.join(root, 'scores3d.tsv'), 'w') as fh:
     fh.write('file\tview\tname\tstyle\tscore\tP6\tR6\n')
-    for m in sorted(out, key=lambda m: (m['style'], m['score'])): fh.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (m['file'], m['id'], m['name'], m['style'], m['score'], m['ink']['P6'], m['ink']['R6']))
+    for m in sorted(out, key=lambda m: (m['style'], m['score'] if m['score'] is not None else -1)): fh.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (m['file'], m['id'], m['name'], m['style'], m['score'], m['ink']['P6'], m['ink']['R6']))
