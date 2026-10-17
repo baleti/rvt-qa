@@ -20,21 +20,23 @@ for fdir in sorted(glob.glob(os.path.join(root, 'revit', '*'))):
     ix = os.path.join(fdir, 'index.tsv')
     if os.path.exists(ix):
         for l in open(ix, encoding='utf-8', errors='replace'):
-            c = l.rstrip('\n').split('\t')
-            if c[0] == 'VIEW' and len(c) > 5: names[c[1]] = c[4]; types[c[1]] = c[3]
+          c = l.rstrip('\n').split('\t')
+          if c[0] == 'VIEW' and len(c) > 5: names[c[1]] = c[4]; types[c[1]] = c[3]
     cp = os.path.join(fdir, 'cameras.tsv')
     if os.path.exists(cp):
         for l in open(cp):
-            c = l.rstrip('\n').split('\t')
-            if c and c[0].isdigit(): cams[c[0]] = 'eye(%s) tgt(%s) persp=%s' % (c[2], c[3], c[5] if len(c) > 5 else '?')
+          c = l.rstrip('\n').split('\t')
+          if c and c[0].isdigit(): cams[c[0]] = 'eye(%s) tgt(%s) persp=%s' % (c[2], c[3], c[5] if len(c) > 5 else '?')
     for rp in sorted(glob.glob(os.path.join(fdir, '*.png'))):
-        vid = os.path.basename(rp)[:-4]; op = os.path.join(root, 'viewer', f, vid + '__ours3d.png')
+      vid = os.path.basename(rp)[:-4]
+      for vsuf, vtag in (('__ours3d.png', ''), ('__ours3d_hl.png', ' (hidden line)')):
+        op = os.path.join(root, 'viewer', f, vid + vsuf)
         if not os.path.exists(op): continue
         R = cv2.imread(rp, cv2.IMREAD_COLOR); O = cv2.imread(op, cv2.IMREAD_COLOR); H, W = R.shape[:2]
         rb, ob = bbox(R), bbox(O); s = min((rb[2] - rb[0]) / max(ob[2] - ob[0], 1), (rb[3] - rb[1]) / max(ob[3] - ob[1], 1))
         tx = (rb[0] + rb[2]) / 2 - s * (ob[0] + ob[2]) / 2; ty = (rb[1] + rb[3]) / 2 - s * (ob[1] + ob[3]) / 2
         ours = cv2.warpAffine(O, np.float32([[s, 0, tx], [0, s, ty]]), (W, H), flags=cv2.INTER_AREA, borderValue=(255, 255, 255))
-        t = {'ThreeD': '3d', 'FloorPlan': 'plan', 'CeilingPlan': 'plan', 'EngineeringPlan': 'plan', 'AreaPlan': 'plan', 'Elevation': 'elevation', 'Section': 'section', 'Detail': 'detail', 'DrawingSheet': 'sheet'}.get(types.get(vid), '3d'); nm = names.get(vid, vid)
+        t = {'ThreeD': '3d', 'FloorPlan': 'plan', 'CeilingPlan': 'plan', 'EngineeringPlan': 'plan', 'AreaPlan': 'plan', 'Elevation': 'elevation', 'Section': 'section', 'Detail': 'detail', 'DrawingSheet': 'sheet'}.get(types.get(vid), '3d'); nm = names.get(vid, vid) + vtag
         sub = os.path.join(root, '3d_' + f); os.makedirs(sub, exist_ok=True); base = os.path.join(sub, '%s_%s_%s' % (vid, re.sub(r'[^A-Za-z0-9._-]+', '_', nm)[:40], t))
         gd = min(1.0, 2400.0 / max(W, H)); ga = cv2.cvtColor(cv2.resize(ours, None, fx=gd, fy=gd, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY); gb = cv2.cvtColor(cv2.resize(R, (ga.shape[1], ga.shape[0]), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
         A, B = D.ink(ga, 215), D.ink(gb, 215); tt = max(2, int(round(max(ga.shape) / 400.0))); kern = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * tt + 1, 2 * tt + 1))

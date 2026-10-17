@@ -97,4 +97,4 @@ def main():
             m.update(file=sp['label'], id=vid, name=v['name'], type=t, vtype=v['vtype'], score=r.get('score'), qa_pass=r.get('pass'), path=sp['label'] + '/' + name)
             json.dump(m, open(base + '.json', 'w')); allm.append(m); print('ok', m['path'], m['reg_score'], flush=True)
     json.dump(allm, open(os.path.join(outdir, 'manifest_%s.json' % os.path.basename(sys.argv[1]).replace('.json', '')), 'w'), indent=1)
-main()
+if __name__ == "__main__": main()
