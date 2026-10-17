@@ -19,3 +19,4 @@
 - qaall4 (dev cb53624, parent-wall fix): medians unchanged (78.8 / 67.5 / 76.2). Gains Commercial 196826 Typ. Wall at Grade 9.0->15.8, 195619 +4.3, 196813 Typ. Parapet +4.2; drop Commercial 36 Level 1 -1.7. Combined score barely moves although c5-sheets reports DXF precision .688->.97 on Typ. Parapet: those detail views score from the image tier / unreliable registration, so combined score underrates real vector gains. TODO: report DXF P/R next to the score in qa-scorediff.
 - qaall5 (clip-aware vecgeom, same dev cb53624): medians 81.6 / 78.7 / 78.4; many detail views +20..+40; earlier over-drawing claims retracted.
 - pass flag now uses DXF P/R>=0.85 (and text>=0.9) when image registration is unreliable; on qaall5 data this flips 3 of 16 such views (1382670 Continuous Footing, 1383032 Roof Peak, 1382272 Pile cap). Takes effect at the next sweep.
+- qa-regress --dev on cb53624: no regressions vs old baseline; baseline re-saved (32/36/29154/29181/156499).
