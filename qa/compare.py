@@ -161,4 +161,6 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     if not res['reliable']: res['findings'].insert(0, dict(kind='registration-unreliable', score=9.0, reg_score=im.get('reg_score'), note='image metrics not trustworthy (3D shaded export / detail view); rely on text findings'))
     if res.get('ref_ink_px', 1e9) < 400: res['findings'].insert(0, dict(kind='trivial-view', score=0.1, note='Revit export has almost no ink; pass/fail is vacuous'))
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
+    if not res['reliable'] and g:     # image registration unreliable: judge by DXF geometry (mm, no registration needed) and text
+        res['pass'] = bool(g['recall'] >= 0.85 and g['precision'] >= 0.85 and (tr is None or tr >= 0.9))
     return res
