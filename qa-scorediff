@@ -20,7 +20,8 @@ a, b = load(args[0]), load(args[1]); rows = []
 for k in sorted(set(a) & set(b)):
     rows.append((b[k]['score'] - a[k]['score'], k, a[k], b[k]))
 rows.sort(key=lambda x: x[0])
-def show(r): d, k, x, y = r; return '%+6.1f  %5.1f -> %5.1f  %-40s %-8s %s' % (d, x['score'], y['score'], k[0], k[1], y.get('name', ''))
+def pr(j): g = j.get('geom') or {}; return '%s/%s' % (g.get('precision', '-'), g.get('recall', '-'))
+def show(r): d, k, x, y = r; return '%+6.1f  %5.1f -> %5.1f  %-34s %-8s %-28s DXF P/R %s -> %s' % (d, x['score'], y['score'], k[0], k[1], y.get('name', ''), pr(x), pr(y))
 print('== drops'); [print(show(r)) for r in rows if r[0] <= -1.0]
 print('== gains'); [print(show(r)) for r in reversed(rows) if r[0] >= 1.0]
 flips = [r for r in rows if bool(r[2].get('pass')) != bool(r[3].get('pass'))]
