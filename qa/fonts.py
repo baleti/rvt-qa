@@ -12,7 +12,7 @@ def canon(name):
     if re.fullmatch(r'[a-z]{4,}(bd|bi)', n) and not n.endswith('ubi'):      # windows font files: arialbd.ttf, arialbi.ttf
         b = True; i = i or n.endswith('bi'); n = n[:-2]
     n = re.sub(r'[-_ ]?(bolditalic|boldoblique|bold|italic|oblique|regular|roman|normal|black|heavy)', '', n); n = re.sub(r'(psmt|ps|mt)$', '', n); n = re.sub(r'[^a-z0-9]', '', n)
-    alias = {'arialmt': 'arial', 'arialnarrow': 'arialnarrow', 'timesnewroman': 'timesnewroman', 'times': 'timesnewroman', 'trebuchetms': 'trebuchet', 'liberationsans': 'arial', 'helvetica': 'arial', 'sansserif': 'arial'}
+    alias = {'arialmt': 'arial', 'arialnarrow': 'arialnarrow', 'timesnewroman': 'timesnewroman', 'times': 'timesnewroman', 'trebuchetms': 'trebuchet', 'liberationsans': 'arial', 'helvetica': 'arial', 'sansserif': 'arial', 'trebuc': 'trebuchet', 'trebucit': 'trebuchet', 'trebucbd': 'trebuchet', 'trebucbi': 'trebuchet'}
     return alias.get(n, n) or 'unknown', b, i
 
 @functools.lru_cache(maxsize=None)
