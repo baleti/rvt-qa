@@ -22,3 +22,4 @@
 - qa-regress --dev on cb53624: no regressions vs old baseline; baseline re-saved (32/36/29154/29181/156499).
 - snow2 (dev 43af8b6): Snowdon numbers unchanged (69.0/66.2/69.0/66.5); EID(...) text still in 10 SVGs (5 details x 2 files): fix not yet in dev.
 - qaall8 (dev 7076006/88ff41b): corpus medians 81.6/78.7/78.4; rst 8157 North back to 74.0 (the qaall6 drop is gone), Roof Peak 90.9 (the 95.2 was qaall6 only). NOTE: snow/snow2 Snowdon numbers were STALE (qa-dash reused cached SVGs in out6/*/ours); h1snow.sh now deletes them first; snow3 queued.
+- 2026-10-17 c3-qa: Snowdon real run (dev 7778a2a) results + plan DXF recall regressions reported; cover sheet 206143 audit (AUDIT-206143.md, review/audit_regions.py), watch snapshot dev_67a24e0 score 60.5; review folder 312 pairs.
