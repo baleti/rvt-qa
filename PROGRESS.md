@@ -20,3 +20,4 @@
 - qaall5 (clip-aware vecgeom, same dev cb53624): medians 81.6 / 78.7 / 78.4; many detail views +20..+40; earlier over-drawing claims retracted.
 - pass flag now uses DXF P/R>=0.85 (and text>=0.9) when image registration is unreliable; on qaall5 data this flips 3 of 16 such views (1382670 Continuous Footing, 1383032 Roof Peak, 1382272 Pile cap). Takes effect at the next sweep.
 - qa-regress --dev on cb53624: no regressions vs old baseline; baseline re-saved (32/36/29154/29181/156499).
+- snow2 (dev 43af8b6): Snowdon numbers unchanged (69.0/66.2/69.0/66.5); EID(...) text still in 10 SVGs (5 details x 2 files): fix not yet in dev.
