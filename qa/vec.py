@@ -51,7 +51,9 @@ def svg_texts(svg):
             continue
         s = html.unescape(re.sub(r"<[^>]+>", " ", body)); s = " ".join(s.split())
         if not s: continue
-        out.append(dict(t=s, x=float(tm.group(1)), y=float(tm.group(2)), h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start', **fx))
+        dy1 = re.search(r'<tspan[^>]*\bdy="([-\d.e]+)"', body); cy1 = float(dy1.group(1)) if (dy1 and len(tsp) == 1) else 0.0      # single tspan with dy: the baseline is translate + dy (rotated), not the translate itself
+        c1, s1 = math.cos(math.radians(rr)), math.sin(math.radians(rr))
+        out.append(dict(t=s, x=float(tm.group(1)) - cy1 * s1, y=float(tm.group(2)) + cy1 * c1, h=float(sm.group(1)) if sm else 0, rot=(-float(rm.group(1))) % 360 if rm else 0, e=em.group(1) if em else None, anchor=an.group(1) if an else 'start', **fx))
     return out
 
 def norm(s): return re.sub(r'\s+', '', s).lower()

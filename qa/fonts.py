@@ -94,8 +94,9 @@ def baseline(pairs, src, off=None):
             dx, dy = 0.0, o['y'] - r['y']; n = (0.0, 1.0)
             key = '%s %.1fmm' % (canon(r.get('font'))[0], round(r.get('h', 0) * 2) / 2)
         rows.append((key, dx * n[0] + dy * n[1], o, r))
+    nout = sum(1 for x in rows if abs(x[1]) > 8.0); rows = [x for x in rows if abs(x[1]) <= 8.0]      # > 8 mm = matched to another instance of a repeated string, not a baseline offset
     if len(rows) < 3: return None, []
-    v = np.array([x[1] for x in rows]); sm = dict(n=len(v), mean=round(float(v.mean()), 3), median=round(float(np.median(v)), 3), max_abs=round(float(np.abs(v).max()), 3), p90_abs=round(float(np.percentile(np.abs(v), 90)), 3), by_type={})
+    v = np.array([x[1] for x in rows]); sm = dict(n=len(v), mismatched_over_8mm=nout, mean=round(float(v.mean()), 3), median=round(float(np.median(v)), 3), max_abs=round(float(np.abs(v).max()), 3), p90_abs=round(float(np.percentile(np.abs(v), 90)), 3), by_type={})
     g = collections.defaultdict(list)
     for k, dn, o, r in rows: g[k].append((dn, o, r))
     F = []
