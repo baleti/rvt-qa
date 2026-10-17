@@ -1,6 +1,6 @@
 """compare_view: our SVG render of a view vs Revit's PNG/DXF export -> ranked findings + crops."""
 import os, subprocess, json, math, numpy as np, cv2, re
-from . import imgdiff as D, vec, layers as LY, pdfvec, vecgeom
+from . import imgdiff as D, vec, layers as LY, pdfvec, vecgeom, fonts
 
 def raster(svg, w, out):
     if svg.endswith('.png'): return D.load_gray(svg)
@@ -33,7 +33,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     # ---- tier 0: sanity of our own text (needs no Revit reference): leaked sentinels / debug strings / absurd sizes
     if svg.endswith('.svg'):
         for o in vec.svg_texts(open(svg).read()):
-            bad = re.search(r'EID\(|18446744073709551615|4294967295|\bnan\b|\bNone\b|Traceback|0x[0-9a-f]{8}|\{\w+\}|<[A-Za-z]+ object', o['t'])
+            bad = re.search(r'^\?+$|EID\(|18446744073709551615|4294967295|\bnan\b|\bNone\b|Traceback|0x[0-9a-f]{8}|\{\w+\}|<[A-Za-z]+ object', o['t'])
             if bad or (o['h'] > 15 and not is_sheet):
                 F.append(dict(kind='text-garbage', score=3.0, what=o['t'][:80], size_mm=round(o['h'], 1), at_mm=(round(o['x'], 1), round(o['y'], 1)), owner=o.get('e')))
     # ---- tier 1: vector text diff (Revit DXF vs our SVG), numeric
@@ -47,6 +47,9 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
         if nv >= 3:
             m, mi, ex = vec.compare_texts(ours, R, sc, tx, ty); tx_map = vec.compare_texts.last
             res['text'].update(matched=len(m), missing=len(mi), extra=len(ex))
+            try:
+                ft, ff = fonts.check(m, 'dxf'); res['fonts'] = ft; F.extend(ff)
+            except Exception as ex: res['fonts_note'] = repr(ex)[:120]
             pe = [d for _, _, d in m]; res['text']['pos_err_mm_median'] = round(float(np.median(pe)), 2) if pe else None
             hr = [o['h']/r['h'] for r, o, _ in m if r['h'] > 0 and o['h'] > 0]; res['text']['size_ratio_median'] = round(float(np.median(hr)), 3) if hr else None
             for r in mi: F.append(dict(kind='text-missing', score=1.0 + 0.02*len(r['t']), what=r['t'], layer=r['layer'], at_mm=(round(r['mx'], 1), round(r['my'], 1))))
@@ -75,6 +78,9 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
             st = open(svg).read(); items = vec.svg_texts(st)
             ref, m, mi, ex, pg = pdfvec.compare(st, items, pdf)
             res['pdf_text'] = dict(revit=len(ref), ours=len(items), matched=len(m), missing=len(mi), extra=len(ex))
+            try:
+                ft, ff = fonts.check(m, 'pdf'); res['fonts'] = ft; F.extend(ff); res['missing_fonts'] = [dict(revit_font=a, renders_as=c) for a, c in fonts.missing_fonts([r['font'] for r in ref])]
+            except Exception as ex: res['fonts_note'] = repr(ex)[:120]
             for r in mi: F.append(dict(kind='text-missing', score=1.0 + 0.02 * len(r['t']), what=r['t'], font=r['font'], at_mm=(round(r['x'], 1), round(r['y'], 1))))
             for o in ex: F.append(dict(kind='text-extra', score=0.8, what=o['t'], at_mm=(round(o['x'], 1), round(o['y'], 1))))
             for r, o, d in m:
@@ -156,7 +162,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     res['score'] = round(100 * sum(w * v for w, v in parts) / sum(w for w, _ in parts), 1) if parts else None
     for f in F:   # owner hint so findings can be routed without anyone looking at pixels
         k = f['kind']; w = str(f.get('what', ''))
-        f['area'] = ('annotations/text' if k.startswith('text') else 'grids' if k.startswith(('longline', 'bubble')) or 'GRID' in w else
+        f['area'] = ('fonts' if k.startswith('font') else 'annotations/text' if k.startswith('text') else 'grids' if k.startswith(('longline', 'bubble')) or 'GRID' in w else
                      'line weights' if k.startswith('lineweight') else 'view not rendered' if k in ('view-not-rendered', 'registration-unreliable') else
                      'layer ' + w if k in ('layer-missing', 'geom-layer-missing') else ('extra drawn ' + w) if k == 'geom-extra-element' else 'drawing content')
     res['reliable'] = bool(im.get('reg_score', 0) >= 0.35)

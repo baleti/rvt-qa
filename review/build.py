@@ -62,7 +62,29 @@ def build_pair(svg, png, out_base, title):
     hh_ = min(1500, OH); side = np.concatenate([label(fit_h(revit, hh_), 'REVIT  ' + title), np.full((hh_, 12, 3), 90, np.uint8)[:, :, :] if False else np.full((fit_h(revit, hh_).shape[0], 12, 3), 90, np.uint8), label(fit_h(ours, hh_), 'OURS  ' + title)], 1)
     cv2.imwrite(out_base + '__side.png', side, [cv2.IMWRITE_PNG_COMPRESSION, 9])
     th = fit_h(side, 300); cv2.imwrite(out_base + '__thumb.jpg', th, [cv2.IMWRITE_JPEG_QUALITY, 80])
-    return dict(reg_score=round(float(score), 3), scale=round(float(s * sc0 / g), 4), k=k, size=[OW, OH], approx=bool(score < 0.35))
+    vb = re.search(r'viewBox="([-\d. e]+)"', open(svg).read(4000)); vbv = [float(x) for x in vb.group(1).split()] if vb else [0, 0, 1, 1]
+    cm = dict(pxmm=wr / max(vbv[2], 1e-6), x0=x0, y0=y0, vbx=vbv[0], vby=vbv[1])
+    return dict(reg_score=round(float(score), 3), scale=round(float(s * sc0 / g), 4), k=k, size=[OW, OH], approx=bool(score < 0.35), cmap=cm)
+
+def font_crops(base, meta, findings, title, n=6, wmm=60.0, hmm=18.0):
+    """crop Revit | ours around the first n texts of font findings (positions in our svg mm) into base__font<i>.png"""
+    rv = cv2.imread(base + '__revit.png'); ou = cv2.imread(base + '__ours.png'); cm = meta['cmap']; out = []
+    seen = set()
+    for f in findings:
+        if not f['kind'].startswith('font-') or f['kind'] == 'font-substituted': continue
+        for ex in f.get('examples', [])[:3]:
+            key = (f['kind'], ex['t']);
+            if key in seen or len(out) >= n: continue
+            seen.add(key); x, y = ex['at_mm']; px = cm['x0'] + (x - cm['vbx']) * cm['pxmm']; py = cm['y0'] + (y - cm['vby']) * cm['pxmm']
+            w, h = int(wmm * cm['pxmm']), int(hmm * cm['pxmm']); x0, y0 = int(px - w * 0.25), int(py - h * 0.65)
+            def crop(im):
+                H, W = im.shape[:2]; c = np.full((h, w, 3), 255, np.uint8); sx, sy = max(0, x0), max(0, y0); ex_, ey_ = min(W, x0 + w), min(H, y0 + h)
+                if ex_ > sx and ey_ > sy: c[sy - y0:ey_ - y0, sx - x0:ex_ - x0] = im[sy:ey_, sx:ex_]
+                return cv2.resize(c, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC) if w < 700 else c
+            a, b = crop(rv), crop(ou); a = label(a.copy(), 'REVIT  ' + f['what'][:60], 30); b = label(b.copy(), 'OURS  "%s"  [%s]' % (ex['t'], f['kind']), 30)
+            img = np.concatenate([a, np.full((a.shape[0], 8, 3), 90, np.uint8), b], 1); fn = '%s__font%d.png' % (base, len(out)); cv2.imwrite(fn, img)
+            out.append(dict(img=os.path.basename(fn), text=ex['t'], kind=f['kind'], what=f['what']))
+    return out
 
 def pick(rows, vs, per_type):
     by = {}
@@ -94,6 +116,8 @@ def main():
             try: m = build_pair(svg, png, base, '%s %s' % (v['name'], vid))
             except Exception as ex: print('fail', vid, repr(ex)[:150]); continue
             if not m: continue
+            try: m['fontcrops'] = font_crops(base, m, r.get('findings', []), v['name'])
+            except Exception as ex: print('fontcrop fail', vid, repr(ex)[:100])
             m.update(file=sp['label'], id=vid, name=v['name'], type=t, vtype=v['vtype'], score=r.get('score'), qa_pass=r.get('pass'), path=sp['label'] + '/' + name)
             json.dump(m, open(base + '.json', 'w')); allm.append(m); print('ok', m['path'], m['reg_score'], flush=True)
     json.dump(allm, open(os.path.join(outdir, 'manifest_%s.json' % os.path.basename(sys.argv[1]).replace('.json', '')), 'w'), indent=1)
