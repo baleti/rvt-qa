@@ -8,7 +8,8 @@ for p in sorted(glob.glob(os.path.join(root, '*', '*.json'))):
     except Exception: continue
     if 'path' in m and 'type' in m: recs.append(m)
 extra = os.path.join(root, 'pairs3d.json')
-if os.path.exists(extra): recs += json.load(open(extra))
+seen = {m['path'] for m in recs}
+if os.path.exists(extra): recs += [m for m in json.load(open(extra)) if m['path'] not in seen]
 ORDER = ['sheet', 'plan', 'section', 'elevation', 'detail', 'schedule', '3d', 'other']
 TITLE = dict(sheet='Sheets', plan='Plans', section='Sections', elevation='Elevations', detail='Details / drafting', schedule='Schedules / legends', other='Other')
 TITLE['3d'] = '3D views'
