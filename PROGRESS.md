@@ -29,3 +29,4 @@
 - qaall11 corpus: medians 85.7/82.1/80.8; drop Residential 258720 -7.2; see NEEDS-FROM-QA
 - qaall11 Snowdon: medians 75.1/75.0/80.1/78.5 (from 68.5/70.4/68.3/68.4)
 - 258720 'at grade' -7.2 was a QA flap (raster layer registration crossing 0.3; DXF/text/ink identical), not a drawing regression; fixed in compare.py, takes effect next sweep
+- c6-qa: the corpus-wide 'MTEXT ours lower 2-4.7 mm' (median of medians arial +3.1, trebuchet +4.7) was a QA artefact (MTEXT insert = top of text, = 0.72-0.81 x height). Corrected in fonts.baseline; view-level text baseline now clean on 258720/32. Sheet PDF baselines were already 0.0 +-0.1 mm. Not a drawing defect.
