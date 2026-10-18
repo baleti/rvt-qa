@@ -125,7 +125,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
             if tot < 150: continue
             kind = 'region-missing' if c['missing'] > 1.5*c['extra'] else 'region-extra' if c['extra'] > 1.5*c['missing'] else 'region-differs'
             F.append(dict(kind=kind, score=min(2.0, tot/4000), box_px=c['box'], missing_px=c['missing'], extra_px=c['extra'], cell=(c['i'], c['j'])))
-        if dxf and os.path.exists(dxf):
+        if dxf and os.path.exists(dxf) and not res.get('geom_layers'):   # vector per-layer recall (exact, mm) supersedes the raster estimate; the raster one flapped around its 0.3 gate (Residential 258720: -7 points with identical DXF numbers)
             try:
                 lyr = LY.layer_recall(dxf, w)
                 if lyr and lyr['reg_score'] >= 0.3:
