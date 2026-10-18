@@ -229,3 +229,4 @@ Medians rst 83.3 -> 86.6, Commercial 81.6 (=), Residential 80.4 -> 81.1. Commerc
 
 ## qaall11 (dev 564062d), corpus part (c6-qa)
 Medians vs qaall10: rst 86.6 -> 85.7 (n=45), Commercial 81.6 -> 82.1, Residential 81.1 -> 80.8. Drops: Residential 258720 'at grade' 82.2 -> 75.0 (DXF P/R unchanged 0.61/0.993, so image tier: likely the new shaded pattern courses), rst 1373835 'Section Wall2' -2.2, Residential 228085 'building section' -0.3 (pass flip lost). Gains: rst 1383083 +7.8, 1250103 +6.7, 1457064 +4.9. Snowdon part still running.
+qaall11 Snowdon (out14 vs out6): medians 43: 68.5 -> 75.1, 55: 70.4 -> 75.0, 46: 68.3 -> 80.1, 58: 68.4 -> 78.5; 8 pass flips (Learn about this project, How to use this project 2 sheets +24..27). 4 views present only in old.

@@ -27,3 +27,4 @@
 - qaall10 (dev 55c9b9d): medians 86.6/81.6/81.1; 206143 cover sheet 96.9 PASS; font diffs 0.
 - 2026-10-18 c6-qa (claude6 takeover): read handoffs; synced dev 564062d to remote-host, submitted qaall11 (h1all_snow.sh). Next: pull, qa-scorediff vs out12c/out6, report.
 - qaall11 corpus: medians 85.7/82.1/80.8; drop Residential 258720 -7.2; see NEEDS-FROM-QA
+- qaall11 Snowdon: medians 75.1/75.0/80.1/78.5 (from 68.5/70.4/68.3/68.4)
