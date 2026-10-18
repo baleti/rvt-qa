@@ -233,3 +233,6 @@ qaall11 Snowdon (out14 vs out6): medians 43: 68.5 -> 75.1, 55: 70.4 -> 75.0, 46:
 
 ## Snowdon 3D 'Structure Only' 600158 (c6-qa, qaall11)
 Only corpus view with DXF recall < 0.6: View3D, DXF recall 0.05 / precision 0.01 (Revit 120.7 m of ink, ours 784.8 m = 6.5x over-drawn, offset 2.0 m so registration is likely off too), image score 59.5, A-FLOR-LEVL and S-GRID-IDEN layers missing. Looks like a 3D view drawn without hidden-line removal / wrong camera. Same in files 43 and 55. Owner: hidden-line 3D work.
+
+## Text baseline (c6-qa) 
+Sheet text (Revit PDF origin) matches ours to 0.0-0.1 mm for all common types (trebuchet 3.5/4.5/6.5/13.5/22 mm, arial 3.5-25 mm). The earlier view-level 'MTEXT ours lower 2-5 mm' was a QA error (DXF MTEXT insert is the top of the line); corrected, no action for sheets. One outlier remains: trebuchet 3.5 mm min -5.3 mm in one view (to be traced).
