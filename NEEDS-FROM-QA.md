@@ -226,3 +226,6 @@ then pull: rsync -a remote-host:review-compare/history/ ~/review-compare/history
 
 ## qaall10 (dev 55c9b9d) c3-qa 2026-10-18
 Medians rst 83.3 -> 86.6, Commercial 81.6 (=), Residential 80.4 -> 81.1. Commercial Cover Sheet 206143 84.9 -> 96.9 (PASS). Gains: rst Central Pile +5.2, Commercial Building Section 173631 +4.8 (DXF R .87 -> .99), Details 206124 +4.4, rst West 8237 +4.0, Column Schedules +3.3. Only drop: Residential typ. wall 236647 -1.0. Snowdon: no regressions beyond -3.6 (43 'Structure Only' 600158: shaded 3D, DXF meaningless); Snowdon Cover Sheet 921485 stays low (46-47): image tier (3D viewport / sheet index), text baseline now clean. Font tier: font-family-diff 0 (ARchitxt fixed), font-width 4, font-style-diff 2, text-garbage 2 (legit 'Not Used' large text), text-baseline findings 133 (mostly MTEXT groups, whose insert is top-left by definition).
+
+## qaall11 (dev 564062d), corpus part (c6-qa)
+Medians vs qaall10: rst 86.6 -> 85.7 (n=45), Commercial 81.6 -> 82.1, Residential 81.1 -> 80.8. Drops: Residential 258720 'at grade' 82.2 -> 75.0 (DXF P/R unchanged 0.61/0.993, so image tier: likely the new shaded pattern courses), rst 1373835 'Section Wall2' -2.2, Residential 228085 'building section' -0.3 (pass flip lost). Gains: rst 1383083 +7.8, 1250103 +6.7, 1457064 +4.9. Snowdon part still running.

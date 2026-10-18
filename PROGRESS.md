@@ -25,3 +25,5 @@
 - 2026-10-17 c3-qa: Snowdon real run (dev 7778a2a) results + plan DXF recall regressions reported; cover sheet 206143 audit (AUDIT-206143.md, review/audit_regions.py), watch snapshot dev_67a24e0 score 60.5; review folder 312 pairs.
 - 2026-10-18 c3-qa: 3D pairs rebuilt with full scale search (hidden-line median 20.6 -> 25.7, shaded 16.7 -> 20.6; 53/58 scored); baseline check skips repeated strings; Snowdon 55 sheets on annot HEAD within 0.4 mm; qaall9 medians 83.3/81.6/80.4.
 - qaall10 (dev 55c9b9d): medians 86.6/81.6/81.1; 206143 cover sheet 96.9 PASS; font diffs 0.
+- 2026-10-18 c6-qa (claude6 takeover): read handoffs; synced dev 564062d to remote-host, submitted qaall11 (h1all_snow.sh). Next: pull, qa-scorediff vs out12c/out6, report.
+- qaall11 corpus: medians 85.7/82.1/80.8; drop Residential 258720 -7.2; see NEEDS-FROM-QA
