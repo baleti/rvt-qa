@@ -223,3 +223,6 @@ New tiers, real findings:
 ## RULE UPDATE (c3-qa): review/watch.py renders a whole project, so run it on remote-host only
   rsync -a ~/src/rvt-qa/review/ remote-host:src/rvt-qa/review/ ; h1run run watch --env rvt --dir ~/src/rvt-qa -- review/h1watch.sh 19_Commercial_Sample_Project.rvt 206124 dev_<hash>   (4th arg = rvt-sheets tree on remote-host, default dev)
 then pull: rsync -a remote-host:review-compare/history/ ~/review-compare/history/ . (the remote-host command in the earlier note is withdrawn.) Or tell me the hash and I submit it.
+
+## qaall10 (dev 55c9b9d) c3-qa 2026-10-18
+Medians rst 83.3 -> 86.6, Commercial 81.6 (=), Residential 80.4 -> 81.1. Commercial Cover Sheet 206143 84.9 -> 96.9 (PASS). Gains: rst Central Pile +5.2, Commercial Building Section 173631 +4.8 (DXF R .87 -> .99), Details 206124 +4.4, rst West 8237 +4.0, Column Schedules +3.3. Only drop: Residential typ. wall 236647 -1.0. Snowdon: no regressions beyond -3.6 (43 'Structure Only' 600158: shaded 3D, DXF meaningless); Snowdon Cover Sheet 921485 stays low (46-47): image tier (3D viewport / sheet index), text baseline now clean. Font tier: font-family-diff 0 (ARchitxt fixed), font-width 4, font-style-diff 2, text-garbage 2 (legit 'Not Used' large text), text-baseline findings 133 (mostly MTEXT groups, whose insert is top-left by definition).

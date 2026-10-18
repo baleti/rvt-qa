@@ -24,3 +24,4 @@
 - qaall8 (dev 7076006/88ff41b): corpus medians 81.6/78.7/78.4; rst 8157 North back to 74.0 (the qaall6 drop is gone), Roof Peak 90.9 (the 95.2 was qaall6 only). NOTE: snow/snow2 Snowdon numbers were STALE (qa-dash reused cached SVGs in out6/*/ours); h1snow.sh now deletes them first; snow3 queued.
 - 2026-10-17 c3-qa: Snowdon real run (dev 7778a2a) results + plan DXF recall regressions reported; cover sheet 206143 audit (AUDIT-206143.md, review/audit_regions.py), watch snapshot dev_67a24e0 score 60.5; review folder 312 pairs.
 - 2026-10-18 c3-qa: 3D pairs rebuilt with full scale search (hidden-line median 20.6 -> 25.7, shaded 16.7 -> 20.6; 53/58 scored); baseline check skips repeated strings; Snowdon 55 sheets on annot HEAD within 0.4 mm; qaall9 medians 83.3/81.6/80.4.
+- qaall10 (dev 55c9b9d): medians 86.6/81.6/81.1; 206143 cover sheet 96.9 PASS; font diffs 0.
