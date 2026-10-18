@@ -41,7 +41,7 @@ for fdir in sorted(glob.glob(os.path.join(root, 'revit', '*'))):
         # refine the bbox alignment on ink maps (multi-scale + shift, small range), then score ink precision/recall
         gw = min(1.0, 1600.0 / max(W, H)); Rg = cv2.cvtColor(cv2.resize(R, None, fx=gw, fy=gw, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
         Og = cv2.cvtColor(cv2.resize(ours, (Rg.shape[1], Rg.shape[0]), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
-        sc_ = np.exp(np.linspace(-0.08, 0.08, 17)); _, (rs, rdx, rdy, rscore, _M) = D.register_search(Og, Rg, scales=sc_)
+        _, (rs, rdx, rdy, rscore, _M) = D.register_search(Og, Rg)      # full coarse-to-fine scale search: Revit's frame includes datum lines, so the bbox fit can be far off
         Wk, Hk = Rg.shape[1], Rg.shape[0]; c = W / float(Wk)
         ours = cv2.warpAffine(ours, np.float32([[rs, 0, ((1 - rs) * Wk / 2 + rdx) * c], [0, rs, ((1 - rs) * Hk / 2 + rdy) * c]]), (W, H), flags=cv2.INTER_AREA, borderValue=(255, 255, 255))
         Ow = cv2.cvtColor(cv2.resize(ours, (Wk, Hk), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
