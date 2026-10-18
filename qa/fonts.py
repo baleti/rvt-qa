@@ -76,6 +76,9 @@ def missing_fonts(revit_fonts):
     return out
 
 
+MTEXT_TOP_TO_BASELINE = 0.75
+
+
 def baseline(pairs, src, off=None):
     """vertical (text-normal) offset of our text origin vs Revit's, mm, positive = ours lower on the paper.
     src 'dxf': r positions are in the paper frame before registration; off = (dx, dy) geometry registration (absolute) or None (then relative to the text registration, bias is lost).
@@ -95,7 +98,9 @@ def baseline(pairs, src, off=None):
         else:
             dx, dy = 0.0, o['y'] - r['y']; n = (0.0, 1.0)
             key = '%s %.1fmm' % (canon(r.get('font'))[0], round(r.get('h', 0) * 2) / 2)
-        rows.append((key, dx * n[0] + dy * n[1], o, r))
+        dn = dx * n[0] + dy * n[1]
+        if src == 'dxf' and r.get('et') == 'MTEXT': dn -= MTEXT_TOP_TO_BASELINE * (r.get('h') or o.get('h') or 0)   # MTEXT insert is the top of the first line: baseline sits ~0.75 x height lower (measured 0.72-0.81 on Residential)
+        rows.append((key, dn, o, r))
     nout = sum(1 for x in rows if abs(x[1]) > 8.0); rows = [x for x in rows if abs(x[1]) <= 8.0]      # > 8 mm = matched to another instance of a repeated string, not a baseline offset
     if len(rows) < 3: return None, []
     v = np.array([x[1] for x in rows]); sm = dict(n=len(v), mismatched_over_8mm=nout, mean=round(float(v.mean()), 3), median=round(float(np.median(v)), 3), max_abs=round(float(np.abs(v).max()), 3), p90_abs=round(float(np.percentile(np.abs(v), 90)), 3), by_type={})
