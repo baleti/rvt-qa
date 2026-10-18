@@ -236,3 +236,4 @@ Only corpus view with DXF recall < 0.6: View3D, DXF recall 0.05 / precision 0.01
 
 ## Text baseline (c6-qa) 
 Sheet text (Revit PDF origin) matches ours to 0.0-0.1 mm for all common types (trebuchet 3.5/4.5/6.5/13.5/22 mm, arial 3.5-25 mm). The earlier view-level 'MTEXT ours lower 2-5 mm' was a QA error (DXF MTEXT insert is the top of the line); corrected, no action for sheets. One outlier remains: trebuchet 3.5 mm min -5.3 mm in one view (to be traced).
+Real outlier: Snowdon Structural view 871873 'Main Level' (files 43 and 55): beam tags CB18x24 / CB24x39 / CB24 x51 (elements 869866, 869868, 869870, 869890, 869892; trebuchet 3.5 mm) are 5.3-5.8 mm HIGHER than Revit's (n=11 of the view's tags, all same direction); dimension text 9'-6 1/2" is within 0.3 mm. Suggests the tag anchor/offset for structural framing tags (rotated or leader tags?) is off; please check.
