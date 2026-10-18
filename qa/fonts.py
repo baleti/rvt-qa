@@ -103,9 +103,9 @@ def baseline(pairs, src, off=None):
     for k, dn, o, r in rows: g[k].append((dn, o, r))
     F = []
     for k, L in sorted(g.items(), key=lambda kv: -len(kv[1])):
-        a = np.array([x[0] for x in L]); med = float(np.median(a)); sm['by_type'][k] = dict(n=len(a), median=round(med, 3), mean=round(float(a.mean()), 3), max_abs=round(float(np.abs(a).max()), 3))
+        a = np.array([x[0] for x in L]); med = float(np.median(a)); sm['by_type'][k] = dict(n=len(a), median=round(med, 3), mean=round(float(a.mean()), 3), max_abs=round(float(np.abs(a).max()), 3), per_h=round(float(np.median([x[0] / x[2]['h'] for x in L if x[2].get('h')] or [0])), 3))
         if len(a) >= 3 and abs(med) > 0.25:
             Ls = sorted(L, key=lambda x: -x[1]['h'])[:6]
             ex = [dict(t=o['t'][:24], at_mm=(round(o['x'], 1), round(o['y'], 1)), e=o.get('e'), dn=round(dn, 2)) for dn, o, r in Ls]
-            F.append(dict(kind='text-baseline', score=0.6 + min(abs(med), 3.0) / 3.0, what='%s: median baseline offset %+.2f mm (ours %s), n=%d' % (k, med, 'lower' if med > 0 else 'higher', len(a)), n=len(a), median_mm=round(med, 3), examples=ex, at_mm=ex[0]['at_mm']))
+            F.append(dict(kind='text-baseline', score=0.6 + min(abs(med), 3.0) / 3.0, what='%s: median baseline offset %+.2f mm = %+.2f x text height (ours %s), n=%d' % (k, med, sm['by_type'][k]['per_h'], 'lower' if med > 0 else 'higher', len(a)), n=len(a), median_mm=round(med, 3), examples=ex, at_mm=ex[0]['at_mm']))
     return sm, F

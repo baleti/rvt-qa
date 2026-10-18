@@ -71,3 +71,6 @@ Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out
 2. `./h1queue.sh qaall ./h1all.sh` (queues on host1, waits for 11 GB free)
 3. compare with the previous run: `./qa-scorediff out_old out_new` (drops, gains, pass flips, DXF P/R).
 4. pull: `rsync -a --exclude ours host1:src/rvt-qa/out3/ out3/` (same for out4), then `./qa-textcat out3`, `./qa-index out3`, `./qa-regress --dev` for the golden set.
+
+## Latest sweep (qaall11, dev 564062d, 2026-10-18)
+Medians: rst 85.7, Commercial 82.1, Residential 80.8; Snowdon 43/55 Structural 75.1/75.0, 46/58 Facades 80.1/78.5 (all up 5-12 points; Learn/How-to cover sheets now PASS at ~93). Open: Residential 258720 'at grade' -7.2 (image tier). VLM survey (Qwen2-VL, CLIP) deliberately not pursued: SmolVLM was useless and the vector tiers are exact; revisit only if host1 has 11 GB free and a concrete need.
