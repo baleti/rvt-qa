@@ -230,3 +230,6 @@ Medians rst 83.3 -> 86.6, Commercial 81.6 (=), Residential 80.4 -> 81.1. Commerc
 ## qaall11 (dev 564062d), corpus part (c6-qa)
 Medians vs qaall10: rst 86.6 -> 85.7 (n=45), Commercial 81.6 -> 82.1, Residential 81.1 -> 80.8. Drops: Residential 258720 'at grade' 82.2 -> 75.0 (RETRACTED: QA flap in the raster layer check, DXF/text/ink identical; fixed in qa/compare.py, not a drawing regression), rst 1373835 'Section Wall2' -2.2, Residential 228085 'building section' -0.3 (pass flip lost). Gains: rst 1383083 +7.8, 1250103 +6.7, 1457064 +4.9. Snowdon part still running.
 qaall11 Snowdon (out14 vs out6): medians 43: 68.5 -> 75.1, 55: 70.4 -> 75.0, 46: 68.3 -> 80.1, 58: 68.4 -> 78.5; 8 pass flips (Learn about this project, How to use this project 2 sheets +24..27). 4 views present only in old.
+
+## Snowdon 3D 'Structure Only' 600158 (c6-qa, qaall11)
+Only corpus view with DXF recall < 0.6: View3D, DXF recall 0.05 / precision 0.01 (Revit 120.7 m of ink, ours 784.8 m = 6.5x over-drawn, offset 2.0 m so registration is likely off too), image score 59.5, A-FLOR-LEVL and S-GRID-IDEN layers missing. Looks like a 3D view drawn without hidden-line removal / wrong camera. Same in files 43 and 55. Owner: hidden-line 3D work.
