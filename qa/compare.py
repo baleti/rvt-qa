@@ -52,7 +52,13 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
             except Exception as ex: res['fonts_note'] = repr(ex)[:120]
             pe = [d for _, _, d in m]; res['text']['pos_err_mm_median'] = round(float(np.median(pe)), 2) if pe else None
             hr = [o['h']/r['h'] for r, o, _ in m if r['h'] > 0 and o['h'] > 0]; res['text']['size_ratio_median'] = round(float(np.median(hr)), 3) if hr else None
-            for r in mi: F.append(dict(kind='text-missing', score=1.0 + 0.02*len(r['t']), what=r['t'], layer=r['layer'], at_mm=(round(r['mx'], 1), round(r['my'], 1))))
+            cl = [r for r in mi if r['t'] in ('C', 'L')]      # Revit exports the centerline symbol as stacked 'C' + 'L' glyphs ~1 mm apart: report it once, as 'centerline symbol'
+            cl_ids = set()
+            for a in cl:
+                for b in cl:
+                    if a['t'] == 'C' and b['t'] == 'L' and abs(a['mx'] - b['mx']) < 2.5 and abs(a['my'] - b['my']) < 2.5: cl_ids |= {id(a), id(b)}; F.append(dict(kind='text-missing', score=1.0, what='centerline symbol (C+L)', layer=a['layer'], at_mm=(round(a['mx'], 1), round(a['my'], 1))))
+            for r in mi:
+                if id(r) not in cl_ids: F.append(dict(kind='text-missing', score=1.0 + 0.02*len(r['t']), what=r['t'], layer=r['layer'], at_mm=(round(r['mx'], 1), round(r['my'], 1))))
             for o in ex:
                 dim = re.fullmatch(r"[-\d' \"/]+", o['t']) and ("'" in o['t'] or '"' in o['t'])    # Revit's DXF omits dimension strings (they are in its PNG): informational only
                 F.append(dict(kind='text-extra-dim' if dim else 'text-extra', score=0.15 if dim else 0.8, what=o['t'], at_mm=(round(o['x'], 1), round(o['y'], 1)), owner=o.get('e')))
@@ -185,4 +191,5 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
     if not res['reliable'] and g:     # image registration unreliable: judge by DXF geometry (mm, no registration needed) and text
         res['pass'] = bool(g['recall'] >= 0.85 and g['precision'] >= 0.85 and (tr is None or tr >= 0.9))
+    res['pass_vector'] = bool(g and g['recall'] >= 0.95 and g['precision'] >= 0.9 and (tr is None or tr >= 0.85))   # DXF geometry+text agree even if the PNG tier disagrees (Revit's PNG carries hatch/pattern ink the DXF lacks)
     return res
