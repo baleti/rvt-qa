@@ -250,3 +250,6 @@ Real outlier: Snowdon Structural view 871873 'Main Level' (files 43 and 55): bea
 
 ## 3D 600158 visual confirmation (c7-qa)
 Crop out14/43_*/diff/600158_f00_region-extra.png (Claude viewed): Revit shows a hidden-line view (occluded edges removed, floor deck solid, dashed/halftone beams behind); ours is a full wireframe with every back edge drawn, and the frame is also offset/slightly scaled against Revit (red/cyan overlay does not coincide). Needs hidden-line removal plus camera check for View3D 'Structure Only'; QA numbers for this view are not meaningful until the camera matches.
+
+## qaall12 (dev 9cc31a8) c7-qa, out15 (corpus) / out16 (Snowdon)
+No regressions >= 5. Medians vs qaall11: rst 85.7 -> 85.9, Commercial 82.1 -> 83.3, Residential 80.8 -> 81.1; Snowdon 43 75.1 -> 76.5, 46 80.1 -> 82.5, 55 75.0 -> 76.7, 58 78.5 -> 79.8. Gains: Commercial Elevations 205524 +10.4 (PASS), Restroom Elevation C +9.6, Residential gable end +7.7, 258720 'at grade' back to 81.6, Snowdon Drilled Pier 900694 +11 (PASS). One pass lost: rst 1457045 Upper House Framing 91.1 -> 89.6 (check).

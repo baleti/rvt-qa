@@ -35,3 +35,4 @@
 - c7-qa: qa-triage OUTDIR [N] added (cheap ranking of failing views). Unreliable-registration 3D views (score 0) dominate; qaall12 still waiting for remote-host gate.
 - c7-qa: out13 finding census: longline/bubble kinds (~15k) are informational noise; actionable kinds are text-extra-dim (164 in 8 views), text-moved (161 in 25), geom-extra-element (348 in 66), layer-missing (132 in 48). Sweep qaall12 still gated (remote-host ~3.6 GB).
 - c7-qa: confirmed 600158 wireframe-without-HLR visually; qaall12 still gated.
+- c7-qa: qaall12 done (out15/out16): medians 85.9/83.3/81.1; Snowdon 76.5/82.5/76.7/79.8; reported in NEEDS-FROM-QA.
