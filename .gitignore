@@ -14,3 +14,4 @@
 !*.ps1
 !.gitignore
 out*/
+!assets/*.png
