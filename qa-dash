@@ -28,6 +28,6 @@ def write_html(rows, fn, title):
     for r in sorted(rows, key=lambda r: (r.get('pass', False), (r.get('summary') or {}).get('ssim') or 0)):
         s = r.get('summary') or {}; c = 'e' if 'error' in r else 'p' if r.get('pass') else 'f'
         top = '; '.join('%s %s' % (f['kind'], f.get('what', f.get('cell', ''))) for f in (r.get('findings') or [])[:3])
-        h.append('<tr class=%s><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>' % (c, r['id'], r.get('cls'), html.escape(str(r.get('name'))), 'ERR' if c == 'e' else r.get('pass'), s.get('ssim'), s.get('ink_P3'), s.get('ink_R3'), s.get('text_recall'), html.escape(top[:160] if 'error' not in r else r['error'])))
+        h.append('<tr class=%s><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>' % (c, r['id'], r.get('cls'), html.escape(str(r.get('name'))), 'ERR' if c == 'e' else (str(r.get('pass')) + ('+vec' if r.get('pass_vector') and not r.get('pass') else '')), s.get('ssim'), s.get('ink_P3'), s.get('ink_R3'), s.get('text_recall'), html.escape(top[:160] if 'error' not in r else r['error'])))
     h.append('</table>'); open(fn, 'w').write('\n'.join(h))
 main()
