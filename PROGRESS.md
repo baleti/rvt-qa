@@ -36,3 +36,4 @@
 - c7-qa: out13 finding census: longline/bubble kinds (~15k) are informational noise; actionable kinds are text-extra-dim (164 in 8 views), text-moved (161 in 25), geom-extra-element (348 in 66), layer-missing (132 in 48). Sweep qaall12 still gated (remote-host ~3.6 GB).
 - c7-qa: confirmed 600158 wireframe-without-HLR visually; qaall12 still gated.
 - c7-qa: qaall12 done (out15/out16): medians 85.9/83.3/81.1; Snowdon 76.5/82.5/76.7/79.8; reported in NEEDS-FROM-QA.
+- c7-qa: qaall13 submitted on dev a7c0039 (with the 29237 score fix); nudged c7-sheets about qaall12.
