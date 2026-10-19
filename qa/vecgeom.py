@@ -71,25 +71,35 @@ def sample(polys, step=0.25):
             pts.append(a + (b - a) * t[:, None]); lab += [l] * n
     return (np.concatenate(pts) if pts else np.zeros((0, 2))), np.array(lab)
 
-def fft_offset(A, B, cell=1.0):
+def fft_offset(A, B, cell=1.0, k=1):
     lo = np.minimum(A.min(0), B.min(0)); hi = np.maximum(A.max(0), B.max(0)); span = hi - lo
     n = np.minimum((np.ceil(span / cell).astype(int) + 1) * 2, 4096); cell = max(cell, span[0] * 2 / n[0], span[1] * 2 / n[1])
     def img(P):
         I = np.zeros((int(n[1]), int(n[0]))); ij = ((P - lo) / cell).astype(int); ij = ij[(ij[:, 0] < n[0]) & (ij[:, 1] < n[1])]
         np.add.at(I, (ij[:, 1], ij[:, 0]), 1.0); return np.minimum(I, 1.0)
     C = np.fft.irfft2(np.conj(np.fft.rfft2(img(A))) * np.fft.rfft2(img(B)), s=(int(n[1]), int(n[0])))
-    y, x = np.unravel_index(np.argmax(C), C.shape); x = x - n[0] if x > n[0] / 2 else x; y = y - n[1] if y > n[1] / 2 else y
-    return np.array([x * cell, y * cell], float)
+    peaks = []; C = C.copy(); r = max(2, int(3.0 / cell))   # top-k peaks with suppression: a periodic hatch makes several near-equal ones
+    for _ in range(k):
+        y, x = np.unravel_index(np.argmax(C), C.shape)
+        if C[y, x] <= 0: break
+        peaks.append(np.array([(x - n[0] if x > n[0] / 2 else x) * cell, (y - n[1] if y > n[1] / 2 else y) * cell], float))
+        C[max(0, y - r):y + r + 1, max(0, x - r):x + r + 1] = 0
+    return peaks if k > 1 else peaks[0]
 
 def compare(svg_text, dxf, scale, tol_mm=0.6):
     ours = svg_polys(svg_text); ref = dxf_polys(dxf, scale)
     A, la = sample(ours); B, lb = sample(ref)
     if len(A) < 20 or len(B) < 20: return None
-    off = fft_offset(B, A)                  # B + off ~ A
-    for _ in range(5):
-        d, i = cKDTree(A).query(B + off); m = d < 15 * tol_mm
-        if m.sum() < 10: break
-        off += np.median(A[i[m]] - (B[m] + off), 0)
+    tA = cKDTree(A); best = None
+    for off in (fft_offset(B, A, k=6) or [np.zeros(2)]):     # B + off ~ A; keep the candidate that matches most reference ink after ICP (walls/glazing pin the true shift, hatch only repeats it)
+        off = off.copy()
+        for _ in range(5):
+            d, i = tA.query(B + off); m = d < 15 * tol_mm
+            if m.sum() < 10: break
+            off += np.median(A[i[m]] - (B[m] + off), 0)
+        nm = int((tA.query(B + off)[0] <= tol_mm).sum())
+        if best is None or nm > best[0]: best = (nm, off)
+    off = best[1]
     Bs = B + off; ta, tb = cKDTree(A), cKDTree(Bs)
     db = ta.query(Bs)[0]; da = tb.query(A)[0]
     res = dict(offset_mm=[round(float(off[0]), 2), round(float(off[1]), 2)], tol_mm=tol_mm,
