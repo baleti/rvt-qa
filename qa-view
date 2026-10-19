@@ -23,10 +23,14 @@ def run_one(rvt, vid, gtdir, out, svgin=None):
     f = lambda e: os.path.join(gtdir, '%d.%s' % (vid, e)) if '%d.%s' % (vid, e) in v['files'] else None
     return compare.compare_view(svg, meta, f('png'), f('dxf'), os.path.join(out, 'diff'), vid, pdf=f('pdf'), is_sheet=(v['cls'] == 'ViewSheet'))
 if __name__ == '__main__':
-    ap = argparse.ArgumentParser(); ap.add_argument('file'); ap.add_argument('view', type=int); ap.add_argument('--gt'); ap.add_argument('--out'); ap.add_argument('--svg')
+    ap = argparse.ArgumentParser(); ap.add_argument('file'); ap.add_argument('view', type=int); ap.add_argument('--gt'); ap.add_argument('--out'); ap.add_argument('--svg'); ap.add_argument('--refresh', action='store_true')
     a = ap.parse_args(); rvt = os.path.abspath(a.file); gtdir = a.gt or gt.find_gt(rvt)
     if not gtdir: raise SystemExit('no Revit export (gt_views) found for this file; pass --gt DIR')
     out = a.out or os.path.join(HERE, 'out', os.path.basename(rvt))
+    if a.refresh:   # drop the cached render so code changes show up
+        for e in ('svg', 'json'):
+            try: os.remove(os.path.join(out, 'ours', '%d.%s' % (a.view, e)))
+            except FileNotFoundError: pass
     r = run_one(rvt, a.view, gtdir, out, a.svg)
     json.dump(r, open(os.path.join(out, 'result_%d.json' % a.view), 'w'), indent=1, default=str)
     md = ['# QA defects: view %s %s' % (r['id'], r.get('name')), '', 'score %s/100, %s' % (r.get('score'), 'PASS' if r.get('pass') else 'FAIL'), '', '| # | area | kind | detail | crop |', '|---|---|---|---|---|']
