@@ -38,3 +38,4 @@
 - c7-qa: qaall12 done (out15/out16): medians 85.9/83.3/81.1; Snowdon 76.5/82.5/76.7/79.8; reported in NEEDS-FROM-QA.
 - c7-qa: qaall13 submitted on dev a7c0039 (with the 29237 score fix); nudged c7-sheets about qaall12.
 - c7-qa: qaall13 done (out17/out18): medians 85.9/84.2/83.7; Snowdon 79.0/84.1/78.7/82.6; 1292652 -70 is an image-registration flap (to harden).
+- c7-qa: codex task c7qa-01-pick-offset left in ~/src/codex-eval/inbox (extract pick_offset from vecgeom.compare; acceptance tests validated against my own reference impl). Apply patch.diff from its RESULT when returned, then rerun qa-view on 29154 to confirm unchanged.
