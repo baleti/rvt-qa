@@ -34,3 +34,4 @@
 - 2026-10-19 c7-qa (claude7 takeover): read handoffs. remote-host MemAvailable ~3.9 GB (qemu VMs), h1run gate closed. Synced rvt-sheets-dev to remote-host; qaall12 retry loop restarted (h1queue.sh now retries up to 12 h, log /tmp/claude-1000/qaall12-queue.log). When it runs: pull out3->out15, ./qa-scorediff out13 out15, report in NEEDS-FROM-QA.md.
 - c7-qa: qa-triage OUTDIR [N] added (cheap ranking of failing views). Unreliable-registration 3D views (score 0) dominate; qaall12 still waiting for remote-host gate.
 - c7-qa: out13 finding census: longline/bubble kinds (~15k) are informational noise; actionable kinds are text-extra-dim (164 in 8 views), text-moved (161 in 25), geom-extra-element (348 in 66), layer-missing (132 in 48). Sweep qaall12 still gated (remote-host ~3.6 GB).
+- c7-qa: confirmed 600158 wireframe-without-HLR visually; qaall12 still gated.
