@@ -37,3 +37,4 @@
 - c7-qa: confirmed 600158 wireframe-without-HLR visually; qaall12 still gated.
 - c7-qa: qaall12 done (out15/out16): medians 85.9/83.3/81.1; Snowdon 76.5/82.5/76.7/79.8; reported in NEEDS-FROM-QA.
 - c7-qa: qaall13 submitted on dev a7c0039 (with the 29237 score fix); nudged c7-sheets about qaall12.
+- c7-qa: qaall13 done (out17/out18): medians 85.9/84.2/83.7; Snowdon 79.0/84.1/78.7/82.6; 1292652 -70 is an image-registration flap (to harden).
