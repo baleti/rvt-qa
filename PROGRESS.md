@@ -30,3 +30,4 @@
 - qaall11 Snowdon: medians 75.1/75.0/80.1/78.5 (from 68.5/70.4/68.3/68.4)
 - 258720 'at grade' -7.2 was a QA flap (raster layer registration crossing 0.3; DXF/text/ink identical), not a drawing regression; fixed in compare.py, takes effect next sweep
 - c6-qa: the corpus-wide 'MTEXT ours lower 2-4.7 mm' (median of medians arial +3.1, trebuchet +4.7) was a QA artefact (MTEXT insert = top of text, = 0.72-0.81 x height). Corrected in fonts.baseline; view-level text baseline now clean on 258720/32. Sheet PDF baselines were already 0.0 +-0.1 mm. Not a drawing defect.
+- c6-qa: pass_vector flag (DXF recall>=.95, precision>=.9, text>=.85): 54 of 130 views, 33 of them FAIL the image-based pass, i.e. the image tier underrates e.g. Snowdon L2 582468 (geom .99/.986, score 57). C+L centerline pairs collapsed. Takes effect at next sweep (qaall12 queued, remote-host gate).
