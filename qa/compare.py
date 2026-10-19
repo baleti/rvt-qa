@@ -175,6 +175,8 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     if res.get('lines') and res['lines']['revit']: parts.append((0.10, res['lines']['matched'] / res['lines']['revit']))
     if res.get('layers'):
         tot = sum(x['ink_px'] for x in res['layers']); parts.append((0.15, sum(x['ink_px'] * x['recall'] for x in res['layers']) / max(tot, 1)))
+    if res.get('geom_layers') and not res.get('layers'):   # vector per-layer recall takes the raster layer term's place (keeps the score stable when the raster term is skipped)
+        tot = sum(x['len_mm'] for x in res['geom_layers']); parts.append((0.15, sum(x['len_mm'] * x['recall'] for x in res['geom_layers']) / max(tot, 1)))
     res['score'] = round(100 * sum(w * v for w, v in parts) / sum(w for w, _ in parts), 1) if parts else None
     for f in F:   # owner hint so findings can be routed without anyone looking at pixels
         k = f['kind']; w = str(f.get('what', ''))
