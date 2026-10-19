@@ -191,4 +191,5 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
     res['pass'] = bool(im.get('ink_R6', 0) >= 0.85 and im.get('ink_P6', 0) >= 0.85 and (tr is None or tr >= 0.9))
     if not res['reliable'] and g:     # image registration unreliable: judge by DXF geometry (mm, no registration needed) and text
         res['pass'] = bool(g['recall'] >= 0.85 and g['precision'] >= 0.85 and (tr is None or tr >= 0.9))
+    res['pass_vector'] = bool(g and g['recall'] >= 0.95 and g['precision'] >= 0.9 and (tr is None or tr >= 0.85))   # DXF geometry+text agree even if the PNG tier disagrees (Revit's PNG carries hatch/pattern ink the DXF lacks)
     return res
