@@ -39,3 +39,4 @@
 - c7-qa: qaall13 submitted on dev a7c0039 (with the 29237 score fix); nudged c7-sheets about qaall12.
 - c7-qa: qaall13 done (out17/out18): medians 85.9/84.2/83.7; Snowdon 79.0/84.1/78.7/82.6; 1292652 -70 is an image-registration flap (to harden).
 - c7-qa: codex task c7qa-01-pick-offset left in ~/src/codex-eval/inbox (extract pick_offset from vecgeom.compare; acceptance tests validated against my own reference impl). Apply patch.diff from its RESULT when returned, then rerun qa-view on 29154 to confirm unchanged.
+- c7-qa: image-registration scale ranges (reliable views): sheets 0.997-1.002, plans 0.77-1.08, sections 0.5-1.6, 3D 0.5-1.9, drafting 0.83-1.24 -> no safe global prior to stop the 1292652 flap; only sheets could be pinned (already stable). Left as is; flap is flagged in NEEDS. Waiting: dev commit for qaall14, codex patch c7qa-01.
