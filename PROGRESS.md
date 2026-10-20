@@ -47,3 +47,4 @@
 - c7-qa: codex c7qa-02/03 applied (patch 03 needed its shebang line restored; applied with the tests excluded and the overlay tests copied). qa-scorediff and qa-triage output byte-identical on out13/out15, exit code kept, 8 tests pass.
 - c7-qa: qaall14 (out19/out20) reported: 594716 beam tags fixed (moved 38->7), 871873 CB tags worse (5.3->6.5 mm), Facades L3/L5 drops are registration flaps.
 - c7-qa: qaall15 queued on dev f7fc7b2 (annot/units/visibility/areapoly changes).
+- c7-qa: retracted CB-tag finding (pdfvec rotated text bug, measured 0.19 mm after fix).
