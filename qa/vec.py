@@ -1,5 +1,5 @@
 """Vector-level semantic diff: text items (content, position, height, rotation) of Revit's DXF vs our SVG, registered by voting on identical strings."""
-import math, re, math, collections, html
+import functools, math, re, collections, html
 import numpy as np
 
 def dxf_texts(fn):
@@ -82,9 +82,20 @@ def left_edge(o):
     a = o.get('anchor', 'start')
     return o['x'] - (w if a == 'end' else w / 2 if a == 'middle' else 0)
 
+@functools.lru_cache(maxsize=None)
+def _advance(t, family, bold, italic, h):
+    """real advance width of the string in mm (the 0.5 em per char estimate was off by several mm on long tags); None when no font file resolves"""
+    try:
+        from . import fonts
+        return fonts.advance_mm(t, family, bold, italic, h)
+    except Exception: return None
+
 def left_edge_xy(o):
     """left_edge along the text baseline for rotated text (rot is counter-clockwise in o)"""
-    w = 0.5 * o.get('h', 0) * len(o['t']); a = o.get('anchor', 'start')
+    a = o.get('anchor', 'start'); w = None
+    if a != 'start' and o.get('font') and o.get('h'):
+        w = _advance(o['t'], o['font'].split(',')[0].strip().strip('"\''), bool(o.get('bold')), bool(o.get('italic')), float(o['h']))
+    if w is None: w = 0.5 * o.get('h', 0) * len(o['t'])
     sh = w if a == 'end' else w / 2 if a == 'middle' else 0
     rr = math.radians(-o.get('rot', 0))
     return o['x'] - sh * math.cos(rr), o['y'] - sh * math.sin(rr)
