@@ -99,7 +99,7 @@ def baseline(pairs, src, off=None):
             dx, dy = 0.0, o['y'] - r['y']; n = (0.0, 1.0)
             key = '%s %.1fmm' % (canon(r.get('font'))[0], round(r.get('h', 0) * 2) / 2)
         dn = dx * n[0] + dy * n[1]
-        if src == 'dxf' and r.get('et') == 'MTEXT': dn -= MTEXT_TOP_TO_BASELINE * (r.get('h') or o.get('h') or 0)   # MTEXT insert is the top of the first line: baseline sits ~0.75 x height lower (measured 0.72-0.81 on Residential)
+        if src == 'dxf' and r.get('et') == 'MTEXT' and not r.get('top_fixed'): dn -= MTEXT_TOP_TO_BASELINE * (r.get('h') or o.get('h') or 0)   # MTEXT insert is the top of the first line: baseline sits ~0.75 x height lower (measured 0.72-0.81 on Residential)
         rows.append((key, dn, o, r))
     nout = sum(1 for x in rows if abs(x[1]) > 8.0); rows = [x for x in rows if abs(x[1]) <= 8.0]      # > 8 mm = matched to another instance of a repeated string, not a baseline offset
     if len(rows) < 3: return None, []

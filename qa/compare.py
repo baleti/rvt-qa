@@ -42,6 +42,10 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
         ref, k = vec.dxf_texts(dxf); ours = vec.svg_texts(open(svg).read())
         S = 304.8 / meta['scale']
         R = [dict(r, x=r['x']*S, y=-r['y']*S, h=r["h"]*S*1.389) for r in ref]   # measured: DXF text height = 1.389 x our SVG font-size (Revit text size vs em)
+        for r in R:     # MTEXT insert is the top-left of the text box (attachment 1): move it to the baseline start along the text's own 'down' direction so rotated tags compare at the same point as our SVG text (verified: beam tags at every rotation within 0.2 mm)
+            if r.get('et') == 'MTEXT':
+                th = math.radians(r.get('rot', 0)); hh = fonts.MTEXT_TOP_TO_BASELINE * r['h']
+                r['x'] += math.sin(th) * hh; r['y'] += math.cos(th) * hh; r['top_fixed'] = True
         sc, tx, ty, nv = vec.vote_registration(ours, R)
         res['text'] = dict(revit=len(ref), ours=len(ours), votes=nv)
         if nv >= 3:
