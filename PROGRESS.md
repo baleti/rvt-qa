@@ -50,3 +50,4 @@
 - c7-qa: retracted CB-tag finding (pdfvec rotated text bug, measured 0.19 mm after fix).
 - c7-qa: qaall15 (out21/22) neutral. Codex tasks c7qa-04 (sample vectorise), 05 (pdf anchor_point), 06 (qa-summary) queued.
 - c7-qa: qaall16 queued on dev 698f5cc (merge vg 00c6525); codex 04/05/06 pending.
+- c7-qa: codex c7qa-04 applied (sample vectorised), real-data 29154 identical, 11 tests pass.
