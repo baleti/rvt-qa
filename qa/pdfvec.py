@@ -12,7 +12,13 @@ def pdf_texts(fn):
                 t = s['text'].strip()
                 if not t: continue
                 x0, y0, x1, y1 = [v * PT for v in s['bbox']]
-                out.append(dict(t=t, x=x0, y=(s['origin'][1] * PT if s.get('origin') else y1 - 0.212 * s['size'] * PT), cx=(x0 + x1) / 2, cy=(y0 + y1) / 2, h=s['size'] * PT, font=s['font'], w=x1 - x0, x1=x1))
+                d = l.get('dir', (1.0, 0.0)); rotated = abs(d[1]) > 0.1 or d[0] < 0.9
+                it = dict(t=t, x=x0, y=(s['origin'][1] * PT if s.get('origin') else y1 - 0.212 * s['size'] * PT), cx=(x0 + x1) / 2, cy=(y0 + y1) / 2, h=s['size'] * PT, font=s['font'], w=x1 - x0, x1=x1)
+                if rotated and s.get('origin'):     # rotated text: the bbox says nothing about the start / middle / end of the baseline; walk along the writing direction from the span origin
+                    ln = y1 - y0 if abs(d[1]) > abs(d[0]) else x1 - x0
+                    ox, oy = s['origin'][0] * PT, s['origin'][1] * PT
+                    it['rot_pts'] = {a: (ox + d[0] * ln * f, oy + d[1] * ln * f) for a, f in (('start', 0.0), ('middle', 0.5), ('end', 1.0))}
+                out.append(it)
     return out, (p.rect.width * PT, p.rect.height * PT)
 
 def pdf_weights(fn):
@@ -51,7 +57,9 @@ def compare(svg_text, svg_items, pdf, tol=8.0):
         for i, o in enumerate(svg_items):
             if i in used or norm(o['t']) != norm(r['t']): continue
             rx = r['x'] if o.get('anchor', 'start') == 'start' else (r['cx'] if o['anchor'] == 'middle' else r['x1'])   # compare at the anchor the SVG uses
-            d = math.hypot(o['x'] - rx, o['y'] - r['y'])
+            ry = r['y']
+            if 'rot_pts' in r: rx, ry = r['rot_pts'][o.get('anchor', 'start')]
+            d = math.hypot(o['x'] - rx, o['y'] - ry)
             if best is None or d < best[0]: best = (d, i)
         if best and best[0] <= 60: used.add(best[1]); matched.append((r, svg_items[best[1]], best[0]))
         else: missing.append(r)
