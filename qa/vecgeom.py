@@ -86,12 +86,12 @@ def fft_offset(A, B, cell=1.0, k=1):
         C[max(0, y - r):y + r + 1, max(0, x - r):x + r + 1] = 0
     return peaks if k > 1 else peaks[0]
 
-def compare(svg_text, dxf, scale, tol_mm=0.6):
-    ours = svg_polys(svg_text); ref = dxf_polys(dxf, scale)
-    A, la = sample(ours); B, lb = sample(ref)
-    if len(A) < 20 or len(B) < 20: return None
+def pick_offset(A, B, tol_mm=0.6, k=6):
+    """Pick the translation aligning B to A by refined reference-point matches."""
     tA = cKDTree(A); best = None
-    for off in (fft_offset(B, A, k=6) or [np.zeros(2)]):     # B + off ~ A; keep the candidate that matches most reference ink after ICP (walls/glazing pin the true shift, hatch only repeats it)
+    candidates = fft_offset(B, A, k=k)
+    if isinstance(candidates, np.ndarray): candidates = [candidates]  # fft_offset returns one vector when k=1
+    for off in (candidates or [np.zeros(2)]):     # B + off ~ A; keep the candidate that matches most reference ink after ICP (walls/glazing pin the true shift, hatch only repeats it)
         off = off.copy()
         for _ in range(5):
             d, i = tA.query(B + off); m = d < 15 * tol_mm
@@ -99,7 +99,13 @@ def compare(svg_text, dxf, scale, tol_mm=0.6):
             off += np.median(A[i[m]] - (B[m] + off), 0)
         nm = int((tA.query(B + off)[0] <= tol_mm).sum())
         if best is None or nm > best[0]: best = (nm, off)
-    off = best[1]
+    return best[1]
+
+def compare(svg_text, dxf, scale, tol_mm=0.6):
+    ours = svg_polys(svg_text); ref = dxf_polys(dxf, scale)
+    A, la = sample(ours); B, lb = sample(ref)
+    if len(A) < 20 or len(B) < 20: return None
+    off = pick_offset(A, B, tol_mm=tol_mm)
     Bs = B + off; ta, tb = cKDTree(A), cKDTree(Bs)
     db = ta.query(Bs)[0]; da = tb.query(A)[0]
     res = dict(offset_mm=[round(float(off[0]), 2), round(float(off[1]), 2)], tol_mm=tol_mm,
