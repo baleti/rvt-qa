@@ -43,3 +43,4 @@
 - c7-qa: PDF tier for non-sheet views evaluated on paper: only Snowdon has per-view PDFs (rst 0, Commercial 2, Residential 1); the DXF tier already gives registered text/baseline for every view, PDF would add only font names/line weights and needs its own offset registration. Not pursued. Remaining: qaall14 (needs new dev commit), codex patch c7qa-01.
 - c7-qa: qaall14 queued on dev c21f314 (beam-tag change 5f4b382: expect Snowdon 871873/594716 tag offsets to shrink).
 - c7-qa: codex c7qa-01 applied: pick_offset extracted, 3 tests pass (pytest from ~/.local/bin with PYTHONPATH=.venv site-packages), 29154 offset/recall identical (154.02,112.12; .743/.378).
+- c7-qa: codex tasks c7qa-02-scorediff-module and c7qa-03-triage-module queued (pure refactors + tests). Apply patches when RESULT.md appears; verify CLI output identical on out15/out17 first.
