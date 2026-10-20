@@ -55,3 +55,4 @@
 - c7-qa: codex c7qa-06 applied (qa-summary OUTDIR [--json]); out21 corpus 103 views/32 pass/8 +vec, Snowdon 120/24/26.
 - c7-qa: qaall16 (out23/24) identical to qaall15, no regression from vg merge.
 - c7-qa: text tier fixed (MTEXT top-left + real advance): beam tags at all rotations 0.1-0.2 mm; only spot dims (18'-4" 8-16 mm), TOS(18'-10") 10 mm, 2VLI-6" 5.6 mm are really off on 594716. qaall17 queued to re-baseline.
+- 2026-10-20 c8-qa takeover (claude8): qaall17 pulled (out25/out26), identical scores to qaall16, text-moved 126 -> 96 in corpus; reported in NEEDS-FROM-QA. Next: wait for new dev commit, then qaall18; look at residual text-moved + spot-dim classes.
