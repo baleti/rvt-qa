@@ -57,3 +57,4 @@
 - c7-qa: text tier fixed (MTEXT top-left + real advance): beam tags at all rotations 0.1-0.2 mm; only spot dims (18'-4" 8-16 mm), TOS(18'-10") 10 mm, 2VLI-6" 5.6 mm are really off on 594716. qaall17 queued to re-baseline.
 - 2026-10-20 c8-qa takeover (claude8): qaall17 pulled (out25/out26), identical scores to qaall16, text-moved 126 -> 96 in corpus; reported in NEEDS-FROM-QA. Next: wait for new dev commit, then qaall18; look at residual text-moved + spot-dim classes.
 - 2026-10-20 c8-qa: triage of out25: remaining worst views are 3D shaded (registration unreliable, DXF meaningless) plus the known unimplemented Graphical Column Schedule (1250040, already in NEEDS). watch_dev.sh 18 waits for the next dev commit.
+- c8-qa: reg_margin probe on flap view 1292652: margin 0.023 (reg_score .293), flagged by qa-scorediff (<0.03). Corpus-wide margin distribution comes with qaall18 (dev 41b9572, queued).
