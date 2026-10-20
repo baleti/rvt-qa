@@ -121,7 +121,7 @@ def compare_view(svg, meta, png, dxf, outdir, vid, pdf=None, is_sheet=False):
         o = raster(svg, W, os.path.join(outdir, '%s_ours.png' % vid)); o = cv2.resize(o, (W, H), interpolation=cv2.INTER_AREA)
         w, (s, dx, dy, score, M) = D.register_search(o, ref)
         res['ref_ink_px'] = int(D.ink(ref).sum())
-        res['image'] = dict(scale=round(float(s), 4), shift_px=(int(dx), int(dy)), reg_score=round(float(score), 3))
+        res['image'] = dict(scale=round(float(s), 4), shift_px=(int(dx), int(dy)), reg_score=round(float(score), 3), reg_margin=round(float(D.LAST_MARGIN), 3) if D.LAST_MARGIN is not None else None)
         for tol in (3, 6):
             p, r = D.ink_pr(w, ref, tol); res['image']['ink_P%d' % tol] = round(float(p), 3); res['image']['ink_R%d' % tol] = round(float(r), 3)
         a = cv2.GaussianBlur(w, (0, 0), 1.0); b = cv2.GaussianBlur(ref, (0, 0), 1.0)

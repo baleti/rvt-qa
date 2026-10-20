@@ -74,3 +74,6 @@ Text tier: 1220 of 1295 Revit texts matched (94%) over 43 views; `qa-textcat out
 
 ## Latest sweep (qaall11, dev 564062d, 2026-10-18)
 Medians: rst 85.7, Commercial 82.1, Residential 80.8; Snowdon 43/55 Structural 75.1/75.0, 46/58 Facades 80.1/78.5 (all up 5-12 points; Learn/How-to cover sheets now PASS at ~93). Open: Residential 258720 'at grade' -7.2 (image tier). VLM survey (Qwen2-VL, CLIP) deliberately not pursued: SmolVLM was useless and the vector tiers are exact; revisit only if host1 has 11 GB free and a concrete need.
+
+## Registration fragility (reg_margin)
+`image.reg_margin` = best coarse-scale correlation minus the best at a scale >8% away. Small values (< 0.03) mean the image tier can flip scale between runs (e.g. rst 1292652: margin 0.023, score 90.6 <-> 19.7). `qa-scorediff` tags such views `[low reg margin]`; treat their image-tier score changes as QA noise and read the DXF P/R instead. `watch_dev.sh N` queues sweep qaallN when rvt-sheets-dev gets a new commit.
