@@ -48,6 +48,13 @@ def svg_weights(svg):
         acc[round(float(sw.group(1)), 2)] += L
     return acc
 
+def anchor_point(r, anchor='start'):
+    """Return the reference text point for the SVG anchor."""
+    if 'rot_pts' in r:
+        return r['rot_pts'][anchor]
+    x = r['x'] if anchor == 'start' else (r['cx'] if anchor == 'middle' else r['x1'])
+    return x, r['y']
+
 def compare(svg_text, svg_items, pdf, tol=8.0):
     ref, (pw, ph) = pdf_texts(pdf)
     used = set(); matched = []; missing = []
@@ -56,9 +63,7 @@ def compare(svg_text, svg_items, pdf, tol=8.0):
         best = None
         for i, o in enumerate(svg_items):
             if i in used or norm(o['t']) != norm(r['t']): continue
-            rx = r['x'] if o.get('anchor', 'start') == 'start' else (r['cx'] if o['anchor'] == 'middle' else r['x1'])   # compare at the anchor the SVG uses
-            ry = r['y']
-            if 'rot_pts' in r: rx, ry = r['rot_pts'][o.get('anchor', 'start')]
+            rx, ry = anchor_point(r, o.get('anchor', 'start'))
             d = math.hypot(o['x'] - rx, o['y'] - ry)
             if best is None or d < best[0]: best = (d, i)
         if best and best[0] <= 60: used.add(best[1]); matched.append((r, svg_items[best[1]], best[0]))
