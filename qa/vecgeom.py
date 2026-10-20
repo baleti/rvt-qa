@@ -63,13 +63,31 @@ def dxf_polys(fn, scale):
     return out
 
 def sample(polys, step=0.25):
-    pts, lab = [], []
-    for l, *rest in polys:
-        P = rest[-1]
-        for a, b in zip(P[:-1], P[1:]):
-            n = max(1, int(np.hypot(*(b - a)) / step)); t = (np.arange(n) + 0.5) / n
-            pts.append(a + (b - a) * t[:, None]); lab += [l] * n
-    return (np.concatenate(pts) if pts else np.zeros((0, 2))), np.array(lab)
+    starts, ends, lab, segment_counts = [], [], [], []
+    for poly in polys:
+        P = poly[-1]
+        if len(P) < 2:
+            continue
+        starts.append(P[:-1])
+        ends.append(P[1:])
+        lab.append(poly[0])
+        segment_counts.append(len(P) - 1)
+    if not starts:
+        return np.zeros((0, 2)), np.array([])
+
+    a = np.concatenate(starts)
+    d = np.concatenate(ends) - a
+    n = np.maximum(1, (np.hypot(d[:, 0], d[:, 1]) / step).astype(np.intp))
+    sample_ends = np.cumsum(n)
+    # Expand segments in input order, then recover each sample's local index.
+    k = np.arange(sample_ends[-1]) - np.repeat(sample_ends - n, n)
+    t = (k + 0.5) / np.repeat(n, n)
+    pts = np.repeat(d, n, axis=0).astype(np.float64, copy=False)
+    pts *= t[:, None]
+    pts += np.repeat(a, n, axis=0)
+    poly_ends = sample_ends[np.cumsum(segment_counts) - 1]
+    labels = np.repeat(np.array(lab), np.diff(poly_ends, prepend=0))
+    return pts, labels
 
 def fft_offset(A, B, cell=1.0, k=1):
     lo = np.minimum(A.min(0), B.min(0)); hi = np.maximum(A.max(0), B.max(0)); span = hi - lo
