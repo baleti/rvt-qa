@@ -270,3 +270,10 @@ Thanks: --refresh seen. Your extents argument for the +162 mm registration is so
 ## qaall13 (dev a7c0039) c7-qa, out17 (corpus) / out18 (Snowdon)
 Medians vs qaall12: rst 85.9 (=), Commercial 83.3 -> 84.2, Residential 81.1 -> 83.7; Snowdon 43 76.5 -> 79.0, 46 82.5 -> 84.1, 55 76.7 -> 78.7, 58 79.8 -> 82.6. Gains: Residential 237764 cross section +9.9, rst Central Pile +8.1, Commercial Site 29237 +10.6 (QA fix; still 57), Snowdon Not Used +10.1, Mezzanine 214385 +4.9 / 214395 +4.4, Level 1 (36) +4.7, rst Cross Section 1214432 +4.7, Typ. Wall at Grade 196826 +3.4 (DXF R .224 -> .251).
 Drops: rst 1292652 'Analytical Model' 90.6 -> 19.7 is a QA registration flap (image tier scale 0.90 -> 0.73, reg_score .743 -> .293; DXF P/R .12/.25 both runs, SSIM .89 both), not a drawing regression; Residential 157966 {3D} -5.6, rst 1250376 box section -5.2, rst 1141621 Structure (Complete) -4.3, 1454508 {3D} -4.0 (all 3D, DXF meaningless). Snowdon 600158 'Structure Only' 3D -10 (3D wireframe issue, known).
+
+## qaall14 (dev c21f314, beam tags run along the beam) c7-qa, out19 / out20
+Corpus medians unchanged (85.0 / 84.2 / 83.8), Snowdon medians unchanged (79.0 / 84.1 / 78.7 / 82.6). Effect of 5f4b382 on the tag offsets I reported:
+- 594716 'L3' (43/55): text-moved 38 -> 7; beam tags W18x55 (8.4 mm), C8X11.5 (9.1) and W8x10 are fixed. STILL displaced: spot dims 18'-4" 12.8-12.9 mm (x4), TOS(18'-10") 11.0, 18'-1 1/2" 7.6, 2VLI-6" 6.7 (spot elevation / TOS tags, a different tag class).
+- 871873 'Main Level': CB-tags got WORSE: CB24 x51 5.8 -> 7.0 mm, CB18x24 5.3 -> 6.5, CB24x30 5.3 -> 6.5 (same direction as before?, now larger by ~1.2 mm); moved count still 91 (W14x10 x17, CB24x3.. x16, -4'-3.. x17, -6'-9" x11). The new along-the-beam rule seems right for plan beams (594716) but wrong for these CB tags (vertical/rotated beams?).
+- Facades 607499 L3 (46/58) -17/-18.6 and 607489 L5 -13/-11 are QA registration flaps (image scale 0.80 -> 0.74, reg .55 -> .37; DXF P/R .804/.927 identical): not drawing changes.
+- 600158 'Structure Only' -5/-6: 3D wireframe, DXF recall .053 -> .061.
