@@ -129,13 +129,15 @@ def match_pts(ours, ref, tol=12):
     extra = [o for i, o in enumerate(ours) if i not in used]
     return pairs, miss, extra
 
+LAST_MARGIN = None
+
 def register_search(ours, ref, scales=None, down=4, blur=3):
     """multi-scale + translation search: warp `ours` (scale s about centre then shift) maximising correlation of blurred ink maps. Returns warped, (s, tx, ty, score)."""
     H, W = ref.shape
     def prep(g):
         m = cv2.GaussianBlur(ink(g).astype(np.float32), (0, 0), blur)
         return cv2.resize(m, (W//down, H//down), interpolation=cv2.INTER_AREA)
-    R = prep(ref); best = None
+    R = prep(ref); best = None; trace = []
     if scales is None:
         coarse = np.exp(np.linspace(np.log(0.5), np.log(1.8), 40))
         s0 = register_search(ours, ref, scales=coarse, down=down, blur=blur)[1][0]
@@ -149,8 +151,12 @@ def register_search(ours, ref, scales=None, down=4, blur=3):
         Rp = cv2.copyMakeBorder(R, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=0)
         res = cv2.matchTemplate(Rp, O, cv2.TM_CCORR_NORMED)
         _, mx, _, loc = cv2.minMaxLoc(res)
+        trace.append((s, mx))
         if best is None or mx > best[0]: best = (mx, s, (loc[0]-pad)*down, (loc[1]-pad)*down)
     sc, s, dx, dy = best
+    if len(trace) > 20:    # coarse pass: best score minus best score at a scale >8% away; small = registration may flap between runs
+        global LAST_MARGIN
+        LAST_MARGIN = sc - max([m for t, m in trace if abs(np.log(t / s)) > 0.08] or [0.0])
     M = np.float32([[s, 0, (1-s)*W/2 + dx], [0, s, (1-s)*H/2 + dy]])
     return cv2.warpAffine(og, M, (W, H), flags=cv2.INTER_AREA, borderValue=255), (s, dx, dy, sc, M)
 
