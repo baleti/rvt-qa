@@ -14,7 +14,9 @@ def flap(x, y):    # image registration moved a lot while the DXF numbers did no
     gx, gy = x.get('geom') or {}, y.get('geom') or {}
     rx, ry = (x.get('image') or {}).get('reg_score'), (y.get('image') or {}).get('reg_score')
     return ' [reg flap %.2f->%.2f]' % (rx, ry) if gx and gy and rx is not None and ry is not None and abs(rx - ry) >= 0.1 and abs(gx['precision'] - gy['precision']) < 0.03 and abs(gx['recall'] - gy['recall']) < 0.03 else ''
-def show(r): d, k, x, y = r; return '%+6.1f  %5.1f -> %5.1f  %-34s %-8s %-28s DXF P/R %s -> %s%s' % (d, x['score'], y['score'], k[0], k[1], y.get('name', ''), pr(x), pr(y), flap(x, y))
+def fragile(y):    # reg_margin (new sweeps only): scale-search peak barely above a rival, so the image tier may flap on the next run
+    m = (y.get('image') or {}).get('reg_margin'); return ' [low reg margin %.2f]' % m if m is not None and m < 0.03 else ''
+def show(r): d, k, x, y = r; return '%+6.1f  %5.1f -> %5.1f  %-34s %-8s %-28s DXF P/R %s -> %s%s' % (d, x['score'], y['score'], k[0], k[1], y.get('name', ''), pr(x), pr(y), flap(x, y) + fragile(y))
 print('== drops'); [print(show(r)) for r in rows if r[0] <= -1.0]
 print('== gains'); [print(show(r)) for r in reversed(rows) if r[0] >= 1.0]
 flips = scorediff.flips(rows)
