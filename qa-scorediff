@@ -10,7 +10,11 @@ if len(args) != 2: sys.exit(__doc__)
 a, b = scorediff.load(args[0]), scorediff.load(args[1])
 rows = scorediff.diff(a, b)
 def pr(j): g = j.get('geom') or {}; return '%s/%s' % (g.get('precision', '-'), g.get('recall', '-'))
-def show(r): d, k, x, y = r; return '%+6.1f  %5.1f -> %5.1f  %-34s %-8s %-28s DXF P/R %s -> %s' % (d, x['score'], y['score'], k[0], k[1], y.get('name', ''), pr(x), pr(y))
+def flap(x, y):    # image registration moved a lot while the DXF numbers did not: the score change is a QA artefact, not a drawing change
+    gx, gy = x.get('geom') or {}, y.get('geom') or {}
+    rx, ry = (x.get('image') or {}).get('reg_score'), (y.get('image') or {}).get('reg_score')
+    return ' [reg flap %.2f->%.2f]' % (rx, ry) if gx and gy and rx is not None and ry is not None and abs(rx - ry) >= 0.1 and abs(gx['precision'] - gy['precision']) < 0.01 and abs(gx['recall'] - gy['recall']) < 0.01 else ''
+def show(r): d, k, x, y = r; return '%+6.1f  %5.1f -> %5.1f  %-34s %-8s %-28s DXF P/R %s -> %s%s' % (d, x['score'], y['score'], k[0], k[1], y.get('name', ''), pr(x), pr(y), flap(x, y))
 print('== drops'); [print(show(r)) for r in rows if r[0] <= -1.0]
 print('== gains'); [print(show(r)) for r in reversed(rows) if r[0] >= 1.0]
 flips = scorediff.flips(rows)
