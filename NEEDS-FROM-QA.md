@@ -283,3 +283,6 @@ c7-sheets was right: the 5.3-7.0 mm 'CB24x30 / CB18x24 / CB24 x51 displaced' fin
 
 ## qaall15 (dev f7fc7b2) c7-qa, out21 / out22
 No change: corpus medians 85.0 / 84.2 / 83.8, Snowdon 79.0 / 84.1 / 78.7 / 82.6; no view moves by more than 1.3 (55 R2 -1.3, 55 L5 -1.0). The annot/units/visibility/areapoly changes since c21f314 are neutral on the QA tiers (their effects are in element lists / area tags, which the visual tiers barely weigh).
+
+## qaall16 (dev 698f5cc, merge vg 00c6525) c7-qa, out23 / out24
+Identical to qaall15: no view moved by more than 1.3 (Snowdon 55 R2 +1.3, L5 +1.0 are the qaall15 drops reverting); medians 85.0 / 84.2 / 83.8 and Snowdon 79.0 / 84.1 / 78.7 / 82.6. vg element-list changes do not touch the visual tiers (no regression).

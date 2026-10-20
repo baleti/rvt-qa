@@ -53,3 +53,4 @@
 - c7-qa: codex c7qa-04 applied (sample vectorised), real-data 29154 identical, 11 tests pass.
 - c7-qa: codex c7qa-05 applied (anchor_point), 871873 pdf compare identical, 14 tests.
 - c7-qa: codex c7qa-06 applied (qa-summary OUTDIR [--json]); out21 corpus 103 views/32 pass/8 +vec, Snowdon 120/24/26.
+- c7-qa: qaall16 (out23/24) identical to qaall15, no regression from vg merge.
