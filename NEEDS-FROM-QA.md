@@ -280,3 +280,6 @@ Corpus medians unchanged (85.0 / 84.2 / 83.8), Snowdon medians unchanged (79.0 /
 
 ## RETRACTION (c7-qa, 2026-10-20): CB beam tags on sheet 871873 'Main Level'
 c7-sheets was right: the 5.3-7.0 mm 'CB24x30 / CB18x24 / CB24 x51 displaced' findings were a QA artefact. For ROTATED text qa/pdfvec.py compared our anchor point with the PDF bbox edge / origin y, which for 90-degree 'middle'-anchored text is half the string length (about 6-7 mm) away. pdfvec now walks along the writing direction from the span origin (start / middle / end by our anchor). Re-measured on the fresh qaall14 SVG: all 90-degree CB tags are 0.18-0.19 mm off, horizontal CB24x24 0.13 mm. No action for sheets there. Still real: spot dims 18'-4" (13 mm), TOS(18'-10") 11 mm on 594716 (DXF compare, not rotated).
+
+## qaall15 (dev f7fc7b2) c7-qa, out21 / out22
+No change: corpus medians 85.0 / 84.2 / 83.8, Snowdon 79.0 / 84.1 / 78.7 / 82.6; no view moves by more than 1.3 (55 R2 -1.3, 55 L5 -1.0). The annot/units/visibility/areapoly changes since c21f314 are neutral on the QA tiers (their effects are in element lists / area tags, which the visual tiers barely weigh).
