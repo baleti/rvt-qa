@@ -63,3 +63,4 @@
 - c8-qa: qaall19 (out29/30) no regressions; codex c8qa03 applied, 127 tests pass.
 - c8-qa: qaall20 (out31/32) no regressions; qaall21 queued to verify the verdict/textcat refactor on current QA code (expect identical to qaall20).
 - c8-qa: qaall21 (out33/34, refactored verdict/textcat code, same dev) identical to qaall20: no drops/gains/flips, so the refactor is verified end to end.
+- c8-qa: SCOREBOARD.md section added (~/demo-state), update it when a sweep moves a median.
