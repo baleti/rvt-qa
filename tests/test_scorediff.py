@@ -21,3 +21,10 @@ def test_diff_flips_medians_exit(tmp_path):
     assert S.medians(rows) == {'f1.rvt': (2, 70.0, 67.5)}
     assert S.only_counts(a, b) == (1, 1)
     assert S.exit_code(rows) == 1 and S.exit_code(rows, 11) == 0 and S.exit_code([]) == 0
+
+def test_real_drops_ignores_flaps():
+    g = dict(precision=0.9, recall=0.9)
+    flap = (-20, ('f', 1), dict(score=80, geom=g, image=dict(reg_score=0.8)), dict(score=60, geom=g, image=dict(reg_score=0.3)))
+    real = (-10, ('f', 2), dict(score=80, geom=g, image=dict(reg_score=0.8)), dict(score=70, geom=dict(precision=0.7, recall=0.9), image=dict(reg_score=0.3)))
+    assert S.is_flap(flap[2], flap[3]) and not S.is_flap(real[2], real[3])
+    assert S.real_drops([flap, real]) == [real] and S.real_drops([flap]) == []
