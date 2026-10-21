@@ -305,3 +305,6 @@ No regressions; corpus and Snowdon medians unchanged; only Snowdon Parapet 2 (87
 
 ## Still open at qaall19 (dev 583ffb8) c8-qa
 Residential east 29154: SiteSurface 228877 still 4401 of 4860 mm extra, 146477 3754 of 5193 mm extra, ProfileRoof 158021 1088 of 1439 mm extra (same culprits as reported earlier; Revit omits them in this elevation). Fixing these three should lift 29154 precision from .38 toward .8+.
+
+## qaall20 (dev 414f4bc) c8-qa, out31 / out32
+No regressions. Residential median 83.8 -> 84.0; Snowdon Facades 46 84.1 -> 85.3, 58 82.6 -> 83.4 (593210/593327 sections +1.2..+4, 607489 L5 +7.9 is an image-registration flap: DXF P/R identical), Structural West 201892 +1.2 (DXF precision .866 -> .876).
