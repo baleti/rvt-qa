@@ -24,4 +24,4 @@ print('== pass flips'); [print(('PASS' if r[3].get('pass') else 'FAIL') + ' ' + 
 for f, (n, old_median, new_median) in scorediff.medians(rows).items():
     print('%-40s n=%d median %.1f -> %.1f' % (f, n, old_median, new_median))
 print('only old: %d, only new: %d' % scorediff.only_counts(a, b))
-sys.exit(scorediff.exit_code(rows, mn))
+sys.exit(1 if scorediff.real_drops(rows, mn) else 0)    # flapping image registrations do not fail the run

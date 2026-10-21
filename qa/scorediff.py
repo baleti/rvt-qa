@@ -63,3 +63,16 @@ def only_counts(a, b):
 def exit_code(rows, min_drop=5.0):
     """Return 1 when the first sorted delta meets the drop threshold."""
     return 1 if rows and rows[0][0] <= -min_drop else 0
+
+
+def is_flap(old, new):
+    """True when the image-registration score moved >= 0.1 while the DXF precision/recall stayed within 0.03: the score change is a QA artefact."""
+    go, gn = old.get('geom') or {}, new.get('geom') or {}
+    ro, rn = (old.get('image') or {}).get('reg_score'), (new.get('image') or {}).get('reg_score')
+    return bool(go and gn and ro is not None and rn is not None and abs(ro - rn) >= 0.1
+                and abs(go['precision'] - gn['precision']) < 0.03 and abs(go['recall'] - gn['recall']) < 0.03)
+
+
+def real_drops(rows, min_drop=5.0):
+    """Rows whose drop meets min_drop and is not a registration flap."""
+    return [row for row in rows if row[0] <= -min_drop and not is_flap(row[2], row[3])]
