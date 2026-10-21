@@ -1,27 +1,14 @@
 #!/usr/bin/env python3
 """qa-textcat [RESULTS_DIR=out] : text-tier findings by category over every non-sheet view (dimension strings, level/grid numbers, tag codes, grid letters, other text),
 with matched/missing/extra/moved counts and the worst views per category. Usage: qa-textcat out3"""
-import sys, json, glob, re, collections
-def cat(t):
-    if re.fullmatch(r"[-\d' \"/]+", t) and ("'" in t or '"' in t): return 'dimension string'
-    if re.fullmatch(r"-?\d+(\.\d+)?", t): return 'number (mm dim / level / grid)'
-    if re.fullmatch(r"[A-Z]{1,2}", t): return 'grid letter'
-    if re.search(r'\d', t) and len(t) < 10: return 'tag code'
-    return 'other text'
+import sys
+from qa.textcat import summarise
+
 d = sys.argv[1] if len(sys.argv) > 1 else 'out'
-rows = collections.defaultdict(lambda: collections.Counter()); worst = collections.defaultdict(collections.Counter); nv = 0; tot = collections.Counter()
-for f in glob.glob(d + '/*/results.jsonl'):
-    if '2026' in f: continue
-    for l in open(f):
-        r = json.loads(l)
-        if r.get('cls') == 'ViewSheet' or not (r.get('text') or {}).get('matched') is not None or 'matched' not in (r.get('text') or {}): continue
-        nv += 1; tot['revit'] += r['text']['revit']; tot['matched'] += r['text']['matched']
-        for x in r['findings']:
-            if x['kind'] in ('text-missing', 'text-extra', 'text-moved', 'text-size'):
-                c = cat(x['what']); rows[c][x['kind']] += 1; worst[(c, x['kind'])][f.split('/')[1][:12] + ':' + str(r['id'])] += 1
-print('%d views with a registered text tier; Revit texts %d, matched %d (%.0f%%)' % (nv, tot['revit'], tot['matched'], 100 * tot['matched'] / max(tot['revit'], 1)))
-for c, k in rows.items():
+summary = summarise(d)
+print('%d views with a registered text tier; Revit texts %d, matched %d (%.0f%%)' % (summary['views'], summary['revit'], summary['matched'], 100 * summary['matched'] / max(summary['revit'], 1)))
+for c, k in summary['cats'].items():
     print('%-30s %s' % (c, dict(k)))
     for kind in ('text-missing', 'text-moved'):
-        w = worst[(c, kind)].most_common(3)
+        w = summary['worst'].get((c, kind), [])
         if w: print('    worst %s: %s' % (kind, ', '.join('%s (%d)' % x for x in w)))
