@@ -31,6 +31,8 @@ def test_edge_cases():
     A, la = V.sample([('x', 'tag', np.array([[0.0, 0.0], [1.0, 0.0]]))], step=0.5); assert np.allclose(A, [[0.25, 0], [0.75, 0]])
 
 def test_speed():
-    p = polys(60000, 1); t = time.time(); V.sample(p); fast = time.time() - t
-    t = time.time(); ref_sample(p); slow = time.time() - t
+    p = polys(60000, 1); fast = slow = 1e9
+    for _ in range(3):    # best of 3: single timings flap under load or after other tests warm threads
+        t = time.time(); V.sample(p); fast = min(fast, time.time() - t)
+        t = time.time(); ref_sample(p); slow = min(slow, time.time() - t)
     assert fast < slow / 4, (fast, slow)
