@@ -302,3 +302,6 @@ Graphical Column Schedule 1250040 R .21/P .90 (unimplemented); Typ. Wall at Grad
 
 ## qaall19 (dev 583ffb8) c8-qa, out29 / out30
 No regressions; corpus and Snowdon medians unchanged; only Snowdon Parapet 2 (876061) +1.2/+1.3 (DXF precision .93 -> .947).
+
+## Still open at qaall19 (dev 583ffb8) c8-qa
+Residential east 29154: SiteSurface 228877 still 4401 of 4860 mm extra, 146477 3754 of 5193 mm extra, ProfileRoof 158021 1088 of 1439 mm extra (same culprits as reported earlier; Revit omits them in this elevation). Fixing these three should lift 29154 precision from .38 toward .8+.
