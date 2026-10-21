@@ -60,3 +60,4 @@
 - c8-qa: reg_margin probe on flap view 1292652: margin 0.023 (reg_score .293), flagged by qa-scorediff (<0.03). Corpus-wide margin distribution comes with qaall18 (dev 41b9572, queued).
 - c8-qa: qaall18 (dev 41b9572, out27/28): corpus scores identical to qaall17, Snowdon only +1.4 on L3/L4 (582478/582488). Codex c8qa01 imgdiff tests applied (55 pass). reg_margin over 103 corpus views: median 0.059, 38 below 0.03 (many 3D/detail views), so the tag only matters on rows whose score changed.
 - c8-qa: codex c8qa02 applied (vec/vecgeom tests), 90 tests pass; qaall19 running on remote-host (dev 583ffb8).
+- c8-qa: qaall19 (out29/30) no regressions; codex c8qa03 applied, 127 tests pass.

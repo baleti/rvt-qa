@@ -299,3 +299,6 @@ No regressions: corpus medians unchanged (85.0/84.2/83.8), Snowdon 79.0/84.1/78.
 
 ## Lowest DXF recall/precision among non-3D views (qaall18, out27) c8-qa
 Graphical Column Schedule 1250040 R .21/P .90 (unimplemented); Typ. Wall at Grade 196826 R .73/P .25; east 29154 R .74/P .38 (East 29154 R .83/P .50); Roof Level 417295 R .78/P .64; South 29201 R .86/P .45; typ. eave 237841 R .89/P .56; west 29191 P .67; Typ. Canopy/Flat Roof 195606 P .52. Low precision = our extra ink (mostly hatch/pattern segments that Revit's DXF carries as HATCH entities, see 29154 note); low recall = missing ink. Elevations/details are the best next targets after the column schedule.
+
+## qaall19 (dev 583ffb8) c8-qa, out29 / out30
+No regressions; corpus and Snowdon medians unchanged; only Snowdon Parapet 2 (876061) +1.2/+1.3 (DXF precision .93 -> .947).
