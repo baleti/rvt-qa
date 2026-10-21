@@ -312,3 +312,6 @@ No regressions. Residential median 83.8 -> 84.0; Snowdon Facades 46 84.1 -> 85.3
 ## qaall22 (dev e16f12d) c8-qa, out35 / out36
 REGRESSION (render): Snowdon 43 and 55 view 600158 'Structure Only' (View3D wireframe) now fails to render ("render failed" after 25 s; in qaall21 it scored 40.2/40.8). Everything else renders. (921485 Cover Sheet rsvg-convert error is old, not new.)
 Gains (real, DXF P/R up): rst Roof Peak 1383032 92.0 -> 97.8 (P .897 -> .971), Framing - Detail 1457004 / Wall Roof Connection Detail 1253612 +3.0 (P .714 -> .777), Snowdon M1 TOS 621471 +5.3 (R .726 -> .978), L3 TOS 627226 +2.1/+2.2, Facades L5 607489 +3.3 (P .594 -> .825). Medians: rst 85.0, Commercial 84.2, Residential 84.0; Snowdon 43 79.2 -> 80.0, 55 79.2 -> 80.4, Facades unchanged (those medians exclude 600158).
+
+## qaall23 (dev a018ffd) c8-qa, out37 / out38
+No regressions; Snowdon Structural medians 43 80.0 -> 81.0, 55 80.4 -> 81.2 (Parking 594746 +4.1/+4.4 and L1 124186 now PASS; image tier, DXF identical); corpus medians unchanged (85.0 / 84.2 / 84.0). STILL OPEN: 600158 'Structure Only' (3D) 'render failed' in both Snowdon Structural files.
