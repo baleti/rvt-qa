@@ -293,3 +293,6 @@ Still REALLY displaced on 594716 (same fix applied, so these are real): spot-dim
 
 ## qaall17 (dev d32f3d8, text-position QA fix) c8-qa, out25 / out26
 Scores identical to qaall16 (corpus medians 85.0 / 84.2 / 83.8; Snowdon 79.0 / 84.1 / 78.7 / 82.6; no drops/gains/pass flips). Corpus text-moved findings 126 -> 96 (the MTEXT-origin fix removed 30 artefacts); remaining text-moved are real. 32/103 corpus views pass (+8 vector-pass).
+
+## qaall18 (dev 41b9572) c8-qa, out27 / out28
+No regressions: corpus medians unchanged (85.0/84.2/83.8), Snowdon 79.0/84.1/78.7/82.6; only Snowdon L3 582478 / L4 582488 +1.4.
