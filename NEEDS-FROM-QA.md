@@ -315,3 +315,6 @@ Gains (real, DXF P/R up): rst Roof Peak 1383032 92.0 -> 97.8 (P .897 -> .971), F
 
 ## qaall23 (dev a018ffd) c8-qa, out37 / out38
 No regressions; Snowdon Structural medians 43 80.0 -> 81.0, 55 80.4 -> 81.2 (Parking 594746 +4.1/+4.4 and L1 124186 now PASS; image tier, DXF identical); corpus medians unchanged (85.0 / 84.2 / 84.0). STILL OPEN: 600158 'Structure Only' (3D) 'render failed' in both Snowdon Structural files.
+
+## qaall24 (dev 752a027) c8-qa, Snowdon only (out40); corpus half INVALID
+The corpus half of qaall24 is void (stale results restored by a race between two h1queue loops; fixed, rerun as qaall25). Snowdon (out40) vs qaall23: medians 43 81.0 -> 80.5, 46 85.3 -> 84.9, 58 83.4 -> 83.0, 55 unchanged. Small real drops (DXF precision): Facades South 29201 83.4 -> 81.8 (P .862 -> .824), Structural L2 581543 76.6 -> 75.4 (P .978 -> .969), WV_Section Block 37 593210 -1.2/-1.3 (P/R unchanged, image tier). 600158 'Structure Only' still 'render failed': it renders fine standalone in 29 s on remote-host, but the sweep dies at 25 s under the 3 GB memory cap; peak-RSS probe queued.
