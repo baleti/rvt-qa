@@ -129,7 +129,7 @@ def compare(svg_text, dxf, scale, tol_mm=0.6):
     res = dict(offset_mm=[round(float(off[0]), 2), round(float(off[1]), 2)], tol_mm=tol_mm,
                recall=round(float((db <= tol_mm).mean()), 3), precision=round(float((da <= tol_mm).mean()), 3),
                chamfer_mm=round(float(db.mean() + da.mean()) / 2, 2), hausdorff95_mm=round(float(max(np.percentile(db, 95), np.percentile(da, 95))), 2),
-               revit_mm=round(len(B) * 0.25), ours_mm=round(len(A) * 0.25))
+               revit_mm=round(len(B) * 0.25), ours_mm=round(len(A) * 0.25), extra_mm=round(float((da > tol_mm).sum()) * 0.25))    # absolute unmatched ink of ours: precision alone is distorted when duplicate strokes are removed
     per = collections.defaultdict(lambda: [0, 0])
     for l, d in zip(lb, db): per[l][0] += 1; per[l][1] += d <= tol_mm
     lbn = np.array([str(x) for x in lb]); lan = np.array([str(x) for x in la])

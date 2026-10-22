@@ -9,7 +9,7 @@ if '--min' in sys.argv: args.remove(sys.argv[sys.argv.index('--min') + 1])
 if len(args) != 2: sys.exit(__doc__)
 a, b = scorediff.load(args[0]), scorediff.load(args[1])
 rows = scorediff.diff(a, b)
-def pr(j): g = j.get('geom') or {}; return '%s/%s' % (g.get('precision', '-'), g.get('recall', '-'))
+def pr(j): g = j.get('geom') or {}; return '%s/%s' % (g.get('precision', '-'), g.get('recall', '-')) + (' x%s' % g['extra_mm'] if 'extra_mm' in g else '')
 def flap(x, y):    # image registration moved a lot while the DXF numbers did not: the score change is a QA artefact, not a drawing change
     gx, gy = x.get('geom') or {}, y.get('geom') or {}
     rx, ry = (x.get('image') or {}).get('reg_score'), (y.get('image') or {}).get('reg_score')
