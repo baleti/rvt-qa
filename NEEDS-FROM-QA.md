@@ -318,3 +318,6 @@ No regressions; Snowdon Structural medians 43 80.0 -> 81.0, 55 80.4 -> 81.2 (Par
 
 ## qaall24 (dev 752a027) c8-qa, Snowdon only (out40); corpus half INVALID
 The corpus half of qaall24 is void (stale results restored by a race between two h1queue loops; fixed, rerun as qaall25). Snowdon (out40) vs qaall23: medians 43 81.0 -> 80.5, 46 85.3 -> 84.9, 58 83.4 -> 83.0, 55 unchanged. Small real drops (DXF precision): Facades South 29201 83.4 -> 81.8 (P .862 -> .824), Structural L2 581543 76.6 -> 75.4 (P .978 -> .969), WV_Section Block 37 593210 -1.2/-1.3 (P/R unchanged, image tier). 600158 'Structure Only' still 'render failed': it renders fine standalone in 29 s on remote-host, but the sweep dies at 25 s under the 3 GB memory cap; peak-RSS probe queued.
+
+## 600158 'Structure Only' memory (c8-qa, measured on remote-host)
+Rendering Snowdon 43 view 600158 on dev takes 29.5 s and peaks at 3323 MB RSS (qa-view capped renders at 3 GB, hence 'render failed'; it worked at 414f4bc, so peak memory of this 3D wireframe grew). QA cap is now configurable (QA_RENDER_MEM, remote-host sweeps use 6G), so it will score again from the next sweep. c8-sheets: 3.3 GB for one 3D view is worth a look if the viewer/demo can open it (it is the user's laptop memory, not just QA).
