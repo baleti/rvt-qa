@@ -1,5 +1,5 @@
 import os, glob
-GT = os.path.expanduser('~/rvt-research/gt_views')
+GT = os.path.expanduser(os.environ.get('QA_GT_ROOT', '~/rvt-research/gt_views'))      # QA_GT_ROOT: a tree of synthetic gt dirs (e.g. ~/review-compare-studyx/gt: Revit PDF sets paired to sheets)
 def find_gt(rvt):
     """find the gt_views export directory of a .rvt (matches the FILE line of index.tsv by file name)"""
     base = os.path.basename(rvt).lower()

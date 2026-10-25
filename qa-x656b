@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""qa-studyx FILE.rvt OUTROOT : pair the Revit-exported PDFs sitting next to a real office model with its sheets and write a synthetic gt dir
+OUTROOT/<file stem>/{index.tsv, <sheetid>.pdf, <sheetid>.png} (one page per sheet) for qa-dash (QA_GT_ROOT=OUTROOT). Pairing by sheet number / name in the page text and the PDF file name.
+Needs the rvt-sheets decoder (RVTSHEETS_DIR, default ~/src/rvt-sheets-dev) and pymupdf. Prints a pairing summary line."""
+import sys, os, re, glob, json
+sys.path.insert(0, os.path.expanduser(os.environ.get('RVTSHEETS_DIR', '~/src/rvt-sheets-dev')))
+import pymupdf
+from rvtsheets.decode import Decoder
+rvt = os.path.abspath(sys.argv[1]); root = sys.argv[2]
+norm = lambda t: re.sub(r'[^a-z0-9]+', '', t.lower())
+dec = Decoder(rvt); doc = dec.doc(); sheets = [(sid, s['sheetNumber'] or '', s['name'] or '') for sid, s in doc['sheets'].items()]
+pages = []      # (pdf, page index, text, norm text, pdf name)
+for pf in sorted(glob.glob(os.path.join(os.path.dirname(rvt), '*.pdf'))):
+    try: d = pymupdf.open(pf)
+    except Exception: continue
+    for i in range(min(len(d), 400)):
+        t = d[i].get_text(); pages.append((pf, i, t, norm(t), norm(os.path.basename(pf))))
+best = {}
+for sid, num, name in sheets:
+    nn, nm = norm(num), norm(name)
+    for pi, (pf, i, t, nt, nf) in enumerate(pages):
+        sc = 0.0
+        if len(nn) >= 3 and (nn in nt): sc += 3
+        if len(nn) >= 3 and (nn in nf): sc += 2
+        words = [w for w in re.findall(r'[a-z0-9]+', name.lower()) if len(w) > 2]
+        if words: sc += 2 * sum(1 for w in words if w in t.lower()) / len(words)
+        if len(nm) >= 6 and nm in nf: sc += 1.5
+        if sc > best.get(pi, (0,))[0]: best[pi] = (sc, sid)
+pairs = {}
+for pi, (sc, sid) in best.items():
+    if sc >= 3.0 and (sid not in pairs or sc > pairs[sid][0]): pairs[sid] = (sc, pi)
+stem = os.path.splitext(os.path.basename(rvt))[0]; out = os.path.join(root, stem); os.makedirs(out, exist_ok=True)
+lines = ['FILE\tC:\\studyx\\%s\t0' % os.path.basename(rvt)]
+for sid, (sc, pi) in sorted(pairs.items()):
+    pf, i, *_ = pages[pi]; d = pymupdf.open(pf); one = pymupdf.open(); one.insert_pdf(d, from_page=i, to_page=i); one.save(os.path.join(out, '%d.pdf' % sid))
+    pg = d[i]; zoom = 3000 / max(pg.rect.width, 1); pg.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom), alpha=False).save(os.path.join(out, '%d.png' % sid))
+    nm = next(n for s_, _, n in sheets if s_ == sid)
+    lines.append('VIEW\t%d\tViewSheet\tDrawingSheet\t%s\tscale=1\tplaced=False\t%d.png,%d.pdf\t' % (sid, nm.replace('\t', ' '), sid, sid))
+open(os.path.join(out, 'index.tsv'), 'w').write('\n'.join(lines) + '\n')
+print(json.dumps(dict(file=os.path.basename(rvt), sheets=len(sheets), pdf_pages=len(pages), paired=len(pairs))))

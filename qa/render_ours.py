@@ -5,6 +5,7 @@ from rvtsheets.decode import Decoder
 from rvtsheets.viewdraw import ViewDrawer
 from rvtsheets.viewsvg import view_svg
 from rvtsheets.compose import sheet_svg, crop_rect_uv
+from rvtsheets import shaded3d
 fn, out = sys.argv[1], sys.argv[2]; ids = [int(x) for x in sys.argv[3:]]
 os.makedirs(out, exist_ok=True)
 dec = Decoder(fn); doc = dec.doc(); vd = ViewDrawer(dec, doc)
@@ -13,6 +14,9 @@ for vid in ids:
     try:
         if v.get('kind') == 'sheet' or vid in doc.get('sheets', {}):
             svg = sheet_svg(dec, vid, doc, vd, log=lambda *a: None)
+        elif v.get('kind') == '3d' and os.environ.get('QA_PLAIN3D') != '1' and (shaded3d.is_shaded(v) or shaded3d.has_sky(vd, v)):
+            svg = shaded3d.view_svg(vd, vid)      # what the sheet composer embeds for shaded / sky 3D views (a raster of the shaded model); lines alone made every shaded 3D view score 0
+            if svg is None: svg = view_svg(vd.draw(vid), v.get('scale') or 100, margin_mm=0, crop=crop_rect_uv(v))
         else:
             svg = view_svg(vd.draw(vid), v.get('scale') or 100, margin_mm=0, crop=crop_rect_uv(v))
         open(os.path.join(out, '%d.svg' % vid), 'w').write(svg)
