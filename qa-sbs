@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""qa-sbs OUTDIR_OF_ONE_FILE GTDIR OUT [--n N] [--worst|--random] : side-by-side PNGs (Revit | ours) of the N worst (by combined score) or random views of one qa-dash result dir
+(results.jsonl + ours/<id>.svg); real renders stay local (OUT under ~/review-compare*). Needs rsvg-convert."""
+import sys, os, json, random, subprocess
+from PIL import Image
+d, gt, out = sys.argv[1:4]; n = int(sys.argv[sys.argv.index('--n') + 1]) if '--n' in sys.argv else 8
+rows = [json.loads(l) for l in open(os.path.join(d, 'results.jsonl'))]
+rows = [r for r in rows if 'error' not in r and os.path.exists(os.path.join(d, 'ours', '%d.svg' % r['id']))]
+key = lambda r: (r.get('score') if r.get('score') is not None else (r.get('summary') or {}).get('ssim') or 0)
+rows = random.Random(3).sample(rows, min(n, len(rows))) if '--random' in sys.argv else sorted(rows, key=key)[:n]
+os.makedirs(out, exist_ok=True)
+for r in rows:
+    vid = r['id']; png = os.path.join(gt, '%d.png' % vid)
+    if not os.path.exists(png): continue
+    tmp = os.path.join(out, '_o.png'); subprocess.run(['rsvg-convert', '-w', '1400', '-b', 'white', os.path.join(d, 'ours', '%d.svg' % vid), '-o', tmp], check=False)
+    if not os.path.exists(tmp): continue
+    a = Image.open(tmp).convert('RGB'); b = Image.open(png).convert('RGB'); b = b.resize((1400, int(b.size[1] * 1400 / b.size[0])))
+    im = Image.new('RGB', (2810, max(a.size[1], b.size[1])), 'white'); im.paste(b, (0, 0)); im.paste(a, (1410, 0))
+    if im.size[1] > 1400: im = im.crop((0, 0, 2810, 1400))
+    im.save(os.path.join(out, '%d_%s.png' % (vid, str(r.get('name'))[:20].replace('/', '_').replace(' ', '_')))); os.remove(tmp)
+    print(vid, r.get('name'), key(r))

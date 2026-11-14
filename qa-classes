@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""qa-classes OUTDIR... [--skip3d] : artifact classes ranked by frequency over every results.jsonl under the given out dirs:
+finding kind x area (owner area / layer), number of views affected, summed score weight, example (file, view id, name)."""
+import sys, os, json, glob, collections
+args = [a for a in sys.argv[1:] if not a.startswith('--')]; skip3d = '--skip3d' in sys.argv
+agg = collections.defaultdict(lambda: dict(views=set(), w=0.0, ex=[]))
+nviews = 0
+for d in args:
+    for rj in glob.glob(os.path.join(d, '*', 'results.jsonl')):
+        fn = os.path.basename(os.path.dirname(rj))
+        for l in open(rj):
+            try: r = json.loads(l)
+            except Exception: continue
+            if skip3d and r.get('cls') == 'View3D': continue
+            nviews += 1
+            for f in r.get('findings') or []:
+                k = (f.get('kind'), (f.get('area') or '').split(' ')[0] if f.get('kind', '').startswith(('geom-extra', 'geom-layer')) is False else (f.get('area') or '')[:28])
+                if f.get('kind') in ('geom-extra-element',): k = (f['kind'], 'element')
+                a = agg[k]; a['views'].add((fn, r['id'])); a['w'] += float(f.get('score') or 0)
+                if len(a['ex']) < 3 and (fn, r['id']) not in [(e[0], e[1]) for e in a['ex']]: a['ex'].append((fn[:22], r['id'], str(r.get('name'))[:24], r.get('cls')))
+print(nviews, 'views')
+for k, a in sorted(agg.items(), key=lambda kv: -len(kv[1]['views']))[:40]:
+    print('%4d views  w=%6.1f  %-22s %-30s ex: %s' % (len(a['views']), a['w'], k[0], k[1], '; '.join('%s %s %s' % (e[0], e[1], e[2]) for e in a['ex'])))
